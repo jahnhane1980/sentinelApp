@@ -1,0 +1,1 @@
+data class MarketData(val usdJpy: Double, val fedRepoFlow: Double, val vix: Double)
