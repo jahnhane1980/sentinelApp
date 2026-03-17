@@ -1,38 +1,23 @@
 package com.sentinel.deeptrace.data.repository
 
-import com.sentinel.deeptrace.data.model.Asset
+import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.data.db.WatchlistDao
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
-class LocalWatchlistRepository : WatchlistRepository {
+class LocalWatchlistRepository(private val watchlistDao: WatchlistDao) : WatchlistRepository {
 
-    private val _assets = MutableStateFlow<List<Asset>>(
-        listOf(
-            Asset(
-                "USD/JPY", "Forex",
-                relativeStrength = TODO()
-            ),
-            Asset(
-                "S&P 500", "Index",
-                relativeStrength = TODO()
-            ),
-            Asset(
-                "Gold", "Commodity",
-                relativeStrength = TODO()
-            )
-        )
-    )
-
-    override fun getWatchlistAssets(): Flow<List<Asset>> = _assets.asStateFlow()
-
-    // HIER WICHTIG: Das 'suspend' muss davor stehen!
-    override suspend fun addAsset(asset: Asset) {
-        _assets.value = _assets.value + asset
+    // Liefert den Live-Stream der Datenbank an das UI
+    override fun getWatchlist(): Flow<List<WatchlistItem>> {
+        return watchlistDao.getAllStocks()
     }
 
-    // HIER WICHTIG: Das 'suspend' muss davor stehen!
-    override suspend fun removeAsset(asset: Asset) {
-        _assets.value = _assets.value - asset
+    // Speichert eine neue Aktie in Room
+    override suspend fun addStock(stock: WatchlistItem) {
+        watchlistDao.insertStock(stock)
+    }
+
+    // Löscht eine Aktie aus Room
+    override suspend fun removeStock(stock: WatchlistItem) {
+        watchlistDao.deleteStock(stock)
     }
 }

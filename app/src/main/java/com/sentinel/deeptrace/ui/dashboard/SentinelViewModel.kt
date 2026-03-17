@@ -1,58 +1,56 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import android.util.Log
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.sentinel.deeptrace.core.SentinelConfig
-import com.sentinel.deeptrace.core.ObservationFrequency
-import com.sentinel.deeptrace.data.model.MarketData
+import com.sentinel.deeptrace.data.db.SentinelDatabase
+import com.sentinel.deeptrace.data.model.WatchlistItem
 import com.sentinel.deeptrace.data.repository.FakeMarketRepository
+import com.sentinel.deeptrace.data.repository.LocalWatchlistRepository
 import com.sentinel.deeptrace.domain.GetSentinelScoreUseCase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SentinelViewModel : ViewModel() {
+class SentinelViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repo = FakeMarketRepository()
-    private val getSentinelScoreUseCase = GetSentinelScoreUseCase(repo)
+    private val db = SentinelDatabase.getDatabase(application)
+    private val watchlistRepo = LocalWatchlistRepository(db.watchlistDao())
 
-    // State für das komplette Datenpaket (Cockpit + Details)
-    var marketData by mutableStateOf<MarketData?>(null)
+    private val marketRepo = FakeMarketRepository()
+    private val getSentinelScoreUseCase = GetSentinelScoreUseCase(marketRepo)
+
+    var marketData by mutableStateOf<com.sentinel.deeptrace.data.model.MarketData?>(null)
         private set
 
-    // Deine bestehenden Status-Variablen
-    var frequency by mutableStateOf(SentinelConfig.currentFrequency)
-    var lastUpdate by mutableStateOf(System.currentTimeMillis())
+    val watchlist = watchlistRepo.getWatchlist().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     init {
-        updateAnalysis() // Startet die erste Analyse beim Öffnen
+        updateAnalysis()
     }
 
     fun updateAnalysis() {
         viewModelScope.launch {
-            try {
-                // Holt das gesamte Paket aus dem UseCase
-                val newData = getSentinelScoreUseCase()
-
-                marketData = newData
-                lastUpdate = System.currentTimeMillis()
-
-                Log.d("Sentinel", "Dashboard Daten aktualisiert: SystemScore=${newData.systemScore}")
-            } catch (e: Exception) {
-                Log.e("Sentinel", "Fehler bei der Analyse: ${e.message}")
-            }
+            marketData = getSentinelScoreUseCase()
         }
     }
 
-    fun toggleFrequency() {
-        frequency = if (frequency == ObservationFrequency.WEEKLY) {
-            ObservationFrequency.DAILY
-        } else {
-            ObservationFrequency.WEEKLY
+    fun addStock(symbol: String, name: String) {
+        viewModelScope.launch {
+            watchlistRepo.addStock(WatchlistItem(symbol = symbol, name = name))
         }
-        SentinelConfig.currentFrequency = frequency
-        updateAnalysis()
+    }
+
+    fun removeStock(stock: WatchlistItem) {
+        viewModelScope.launch {
+            watchlistRepo.removeStock(stock)
+        }
     }
 }

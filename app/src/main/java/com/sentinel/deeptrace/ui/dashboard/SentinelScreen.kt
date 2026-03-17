@@ -1,12 +1,20 @@
 package com.sentinel.deeptrace.ui.dashboard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.clickable // Dieser Import fehlte
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,17 +24,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// Import deiner zentralen Farb-Konstanten
 import com.sentinel.deeptrace.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
-    // Zustand für das aufklappbare Intelligence-Panel
     var isExpanded by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
 
-    // Wir holen uns das Datenpaket aus dem ViewModel
     val data = viewModel.marketData
+    val watchlist by viewModel.watchlist.collectAsState()
 
     Scaffold(
         containerColor = SentinelBackground,
@@ -45,9 +52,31 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     containerColor = SentinelBackground
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAddDialog = true },
+                containerColor = SentinelBlue,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Stock")
+            }
         }
     ) { innerPadding ->
-        // Falls noch keine Daten vorhanden sind (Ladezustand)
+
+        if (showAddDialog) {
+            AddStockDialog(
+                onDismiss = { showAddDialog = false },
+                onConfirm = { symbol, name ->
+                    if (symbol.isNotBlank()) {
+                        viewModel.addStock(symbol, name)
+                    }
+                    showAddDialog = false
+                }
+            )
+        }
+
         if (data == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = SentinelBlue)
@@ -59,7 +88,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
-                // 1. TOP STATUS COCKPIT (Scores aus dem ViewModel)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -73,7 +101,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
                 Divider(color = SentinelDivider)
 
-                // 2. WATCHLIST SECTION
                 Text(
                     "WATCHLIST MONITORING",
                     modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
@@ -82,28 +109,26 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     letterSpacing = 1.sp
                 )
 
-                // Beispiel-Liste (noch statisch, bis wir das Watchlist-Repo haben)
-                val watchlist = listOf("Apple", "Microsoft", "Tesla", "Nvidia", "Amazon")
-
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(watchlist) { stock ->
-                        WatchlistItem(name = stock, score = (1..10).random().toDouble())
+                    items(watchlist) { item ->
+                        WatchlistItem(
+                            item = item,
+                            onDelete = { viewModel.removeStock(item) },
+                            onEdit = { /* Edit Logic */ }
+                        )
                     }
                 }
 
-                // 3. EXPANDABLE RESEARCH SECTION (Market Intelligence)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
                         .clickable { isExpanded = !isExpanded },
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF0F4FF)
-                    )
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -114,27 +139,14 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Info, contentDescription = null, tint = SentinelBlue)
                                 Spacer(Modifier.width(12.dp))
-                                Text(
-                                    "MARKET INTELLIGENCE",
-                                    color = SentinelBlue,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
+                                Text("MARKET INTELLIGENCE", color = SentinelBlue, fontWeight = FontWeight.Bold)
                             }
-                            Text(
-                                text = if (isExpanded) "▲" else "▼",
-                                color = SentinelBlue,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text(text = if (isExpanded) "▲" else "▼", color = SentinelBlue)
                         }
 
                         if (isExpanded) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Divider(color = SentinelBlue.copy(alpha = 0.1f))
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Daten kommen jetzt dynamisch aus dem ViewModel/Repository
-                            DetailRow(label = "VIX (Volatility)", value = data.vix.toString(), color = getScoreColor(data.vix, isVix = true))
+                            DetailRow(label = "VIX (Volatility)", value = data.vix.toString(), color = SentinelOrange)
                             DetailRow(label = "Skew Index", value = data.skew.toString(), color = SentinelBlue)
                             DetailRow(label = "Global Liquidity (M2)", value = data.globalLiquidityM2, color = SentinelTurquoise)
                             DetailRow(label = "Fed Repo Flow", value = data.fedRepoFlow, color = SentinelTurquoise)
@@ -143,26 +155,123 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                // 4. MODUS ANZEIGE (Simulation oder Live)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Modus: ", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        Text(
-                            text = if (data.isSimulation) "MARKUP B (Simulation)" else "LIVE MODE",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (data.isSimulation) SentinelOrange else SentinelTurquoise
-                        )
-                    }
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Modus: ${if (data.isSimulation) "MARKUP B (Simulation)" else "LIVE MODE"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (data.isSimulation) SentinelOrange else SentinelTurquoise
+                    )
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun WatchlistItem(
+    item: com.sentinel.deeptrace.data.model.WatchlistItem,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
+) {
+    var showActions by remember { mutableStateOf(false) }
+
+    val scoreColor = when {
+        item.score >= 7.5 -> SentinelBlue
+        item.score >= 4.0 -> SentinelOrange
+        else -> SentinelRed
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .background(SentinelCardSurface, RoundedCornerShape(12.dp))
+                .combinedClickable(
+                    onClick = { if (showActions) showActions = false },
+                    onLongClick = { showActions = true }
+                )
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(item.name, fontWeight = FontWeight.Bold, color = SentinelBlue, fontSize = 16.sp)
+            Surface(color = scoreColor.copy(alpha = 0.08f), shape = RoundedCornerShape(8.dp)) {
+                Text(
+                    text = String.format("%.1f", item.score),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    color = scoreColor,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showActions,
+            enter = expandHorizontally(),
+            exit = shrinkHorizontally()
+        ) {
+            Row(modifier = Modifier.padding(start = 8.dp)) {
+                IconButton(
+                    onClick = { onEdit(); showActions = false },
+                    modifier = Modifier.background(SentinelBlue, RoundedCornerShape(8.dp)).size(40.dp)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White)
+                }
+                Spacer(Modifier.width(8.dp))
+                IconButton(
+                    onClick = { onDelete(); showActions = false },
+                    modifier = Modifier.background(SentinelRed, RoundedCornerShape(8.dp)).size(40.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AddStockDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
+    var symbol by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Aktie hinzufügen", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = symbol,
+                    onValueChange = { symbol = it.uppercase() },
+                    label = { Text("Symbol (z.B. AAPL)") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name (z.B. Apple)") },
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(symbol, name) },
+                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
+            ) {
+                Text("Speichern")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Abbrechen", color = Color.Gray) }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
@@ -172,79 +281,16 @@ fun StatusHeaderItem(label: String, score: Double) {
         score >= 4.0 -> SentinelOrange
         else -> SentinelRed
     }
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = String.format("%.1f", score),
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Black,
-            color = color
-        )
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Gray.copy(alpha = 0.8f)
-        )
-    }
-}
-
-@Composable
-fun WatchlistItem(name: String, score: Double) {
-    val color = when {
-        score >= 7.5 -> SentinelBlue
-        score >= 4.0 -> SentinelOrange
-        else -> SentinelRed
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(SentinelCardSurface, RoundedCornerShape(12.dp))
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(name, fontWeight = FontWeight.Bold, color = SentinelBlue, fontSize = 16.sp)
-
-        Surface(
-            color = color.copy(alpha = 0.08f),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = String.format("%.1f", score),
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                color = color,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp
-            )
-        }
+        Text(text = String.format("%.1f", score), fontSize = 26.sp, fontWeight = FontWeight.Black, color = color)
+        Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
     }
 }
 
 @Composable
 fun DetailRow(label: String, value: String, color: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
-
-// Hilfsfunktion zur farblichen Bewertung einzelner Metriken (z.B. VIX)
-fun getScoreColor(value: Double, isVix: Boolean = false): Color {
-    return if (isVix) {
-        if (value < 20.0) SentinelTurquoise else if (value < 30.0) SentinelOrange else SentinelRed
-    } else {
-        SentinelBlue
+        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
     }
 }

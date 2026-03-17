@@ -16,17 +16,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            // Wir nutzen MaterialTheme als Basis, solange wir kein eigenes Theme-File haben
+            // Wir nutzen MaterialTheme als Basis
             MaterialTheme {
-                // Ein Surface Container, der den Hintergrund des Handys füllt
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Hier wird das ViewModel erzeugt
+                    // ViewModel-Initialisierung für das Dashboard
                     val viewModel: SentinelViewModel = viewModel()
 
-                    // Dein Dashboard wird aufgerufen und bekommt das ViewModel übergeben
+                    // Aufruf deines ursprünglichen Dashboards
                     SentinelScreen(viewModel = viewModel)
                 }
             }
