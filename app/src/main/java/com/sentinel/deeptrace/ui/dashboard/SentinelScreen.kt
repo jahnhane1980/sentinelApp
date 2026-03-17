@@ -16,14 +16,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// WICHTIG: Deine Farb-Konstanten aus der Color.kt
+// Import deiner zentralen Farb-Konstanten
 import com.sentinel.deeptrace.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
-    // Zustand für das aufklappbare Panel
+    // Zustand für das aufklappbare Intelligence-Panel
     var isExpanded by remember { mutableStateOf(false) }
+
+    // Wir holen uns das Datenpaket aus dem ViewModel
+    val data = viewModel.marketData
 
     Scaffold(
         containerColor = SentinelBackground,
@@ -44,111 +47,118 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 20.dp)
-        ) {
-            // 1. TOP STATUS COCKPIT
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                StatusHeaderItem("SYSTEM", 4.5)
-                StatusHeaderItem("S&P 500", 8.2)
-                StatusHeaderItem("NAS 100", 2.1)
+        // Falls noch keine Daten vorhanden sind (Ladezustand)
+        if (data == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = SentinelBlue)
             }
-
-            Divider(color = SentinelDivider)
-
-            // 2. WATCHLIST SECTION
-            Text(
-                "WATCHLIST MONITORING",
-                modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.Gray,
-                letterSpacing = 1.sp
-            )
-
-            val watchlist = listOf("Apple", "Microsoft", "Tesla", "Nvidia", "Amazon")
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp)
             ) {
-                items(watchlist) { stock ->
-                    WatchlistItem(name = stock, score = (1..10).random().toDouble())
+                // 1. TOP STATUS COCKPIT (Scores aus dem ViewModel)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    StatusHeaderItem("SYSTEM", data.systemScore)
+                    StatusHeaderItem("S&P 500", data.sp500Score)
+                    StatusHeaderItem("NAS 100", data.nasdaqScore)
                 }
-            }
 
-            // 3. EXPANDABLE RESEARCH SECTION (Market Intelligence)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .clickable { isExpanded = !isExpanded }, // Klick macht das Panel auf/zu
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF0F4FF)
+                Divider(color = SentinelDivider)
+
+                // 2. WATCHLIST SECTION
+                Text(
+                    "WATCHLIST MONITORING",
+                    modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Gray,
+                    letterSpacing = 1.sp
                 )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = SentinelBlue)
-                            Spacer(Modifier.width(12.dp))
+
+                // Beispiel-Liste (noch statisch, bis wir das Watchlist-Repo haben)
+                val watchlist = listOf("Apple", "Microsoft", "Tesla", "Nvidia", "Amazon")
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(watchlist) { stock ->
+                        WatchlistItem(name = stock, score = (1..10).random().toDouble())
+                    }
+                }
+
+                // 3. EXPANDABLE RESEARCH SECTION (Market Intelligence)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .clickable { isExpanded = !isExpanded },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFF0F4FF)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = SentinelBlue)
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    "MARKET INTELLIGENCE",
+                                    color = SentinelBlue,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
                             Text(
-                                "MARKET INTELLIGENCE",
+                                text = if (isExpanded) "▲" else "▼",
                                 color = SentinelBlue,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                        Text(
-                            text = if (isExpanded) "▲" else "▼",
-                            color = SentinelBlue,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
 
-                    // Sichtbarkeit der Details basierend auf isExpanded
-                    if (isExpanded) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = SentinelBlue.copy(alpha = 0.1f))
-                        Spacer(modifier = Modifier.height(16.dp))
+                        if (isExpanded) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Divider(color = SentinelBlue.copy(alpha = 0.1f))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Makro-Werte (Später aus dem ViewModel)
-                        DetailRow(label = "VIX (Volatility)", value = "23.5", color = SentinelOrange)
-                        DetailRow(label = "Skew Index", value = "145.2", color = SentinelBlue)
-                        DetailRow(label = "Global Liquidity (M2)", value = "$94.2T", color = SentinelTurquoise)
-                        DetailRow(label = "Fed Repo Flow", value = "$620B", color = SentinelTurquoise)
-                        DetailRow(label = "Truflation (yoy)", value = "2.8%", color = SentinelBlue)
+                            // Daten kommen jetzt dynamisch aus dem ViewModel/Repository
+                            DetailRow(label = "VIX (Volatility)", value = data.vix.toString(), color = getScoreColor(data.vix, isVix = true))
+                            DetailRow(label = "Skew Index", value = data.skew.toString(), color = SentinelBlue)
+                            DetailRow(label = "Global Liquidity (M2)", value = data.globalLiquidityM2, color = SentinelTurquoise)
+                            DetailRow(label = "Fed Repo Flow", value = data.fedRepoFlow, color = SentinelTurquoise)
+                            DetailRow(label = "Truflation (yoy)", value = "${data.truflation}%", color = SentinelBlue)
+                        }
                     }
                 }
-            }
 
-            // 4. MODUS ANZEIGE
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Modus: ", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(
-                        text = "MARKUP B (Simulation)",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = SentinelOrange
-                    )
+                // 4. MODUS ANZEIGE (Simulation oder Live)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Modus: ", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Text(
+                            text = if (data.isSimulation) "MARKUP B (Simulation)" else "LIVE MODE",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (data.isSimulation) SentinelOrange else SentinelTurquoise
+                        )
+                    }
                 }
             }
         }
@@ -227,5 +237,14 @@ fun DetailRow(label: String, value: String, color: Color) {
             fontWeight = FontWeight.Bold,
             color = color
         )
+    }
+}
+
+// Hilfsfunktion zur farblichen Bewertung einzelner Metriken (z.B. VIX)
+fun getScoreColor(value: Double, isVix: Boolean = false): Color {
+    return if (isVix) {
+        if (value < 20.0) SentinelTurquoise else if (value < 30.0) SentinelOrange else SentinelRed
+    } else {
+        SentinelBlue
     }
 }

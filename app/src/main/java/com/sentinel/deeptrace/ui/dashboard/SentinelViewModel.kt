@@ -1,6 +1,6 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import android.util.Log // Fix für Log.e
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,32 +8,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sentinel.deeptrace.core.SentinelConfig
 import com.sentinel.deeptrace.core.ObservationFrequency
+import com.sentinel.deeptrace.data.model.MarketData
 import com.sentinel.deeptrace.data.repository.FakeMarketRepository
 import com.sentinel.deeptrace.domain.GetSentinelScoreUseCase
 import kotlinx.coroutines.launch
 
 class SentinelViewModel : ViewModel() {
 
-    // 1. Den UseCase direkt hier initialisieren (da wir noch keine Dependency Injection nutzen)
     private val repo = FakeMarketRepository()
     private val getSentinelScoreUseCase = GetSentinelScoreUseCase(repo)
 
-    // 2. Wir nutzen deine vorhandenen Variablen (einfacher Weg)
-    var currentScore by mutableStateOf(0.0)
+    // State für das komplette Datenpaket (Cockpit + Details)
+    var marketData by mutableStateOf<MarketData?>(null)
+        private set
+
+    // Deine bestehenden Status-Variablen
     var frequency by mutableStateOf(SentinelConfig.currentFrequency)
     var lastUpdate by mutableStateOf(System.currentTimeMillis())
+
+    init {
+        updateAnalysis() // Startet die erste Analyse beim Öffnen
+    }
 
     fun updateAnalysis() {
         viewModelScope.launch {
             try {
-                // Hier rufen wir den UseCase auf
-                val newScore = getSentinelScoreUseCase()
+                // Holt das gesamte Paket aus dem UseCase
+                val newData = getSentinelScoreUseCase()
 
-                // Wir weisen den Wert direkt deinen Variablen zu
-                currentScore = newScore
+                marketData = newData
                 lastUpdate = System.currentTimeMillis()
 
-                Log.d("Sentinel", "Neuer Score berechnet: $newScore")
+                Log.d("Sentinel", "Dashboard Daten aktualisiert: SystemScore=${newData.systemScore}")
             } catch (e: Exception) {
                 Log.e("Sentinel", "Fehler bei der Analyse: ${e.message}")
             }
@@ -41,7 +47,6 @@ class SentinelViewModel : ViewModel() {
     }
 
     fun toggleFrequency() {
-        // Fix für ObservationFrequency (wir nutzen die Werte aus deinem Enum)
         frequency = if (frequency == ObservationFrequency.WEEKLY) {
             ObservationFrequency.DAILY
         } else {
