@@ -1,6 +1,7 @@
 package com.sentinel.deeptrace.ui.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,14 +16,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// WICHTIG: Deine Farb-Konstanten müssen hier importiert werden
+// WICHTIG: Deine Farb-Konstanten aus der Color.kt
 import com.sentinel.deeptrace.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
+    // Zustand für das aufklappbare Panel
+    var isExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
-        containerColor = SentinelBackground, // Weißer Hintergrund
+        containerColor = SentinelBackground,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -46,14 +50,13 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
-            // 1. TOP STATUS COCKPIT (System, S&P 500, Nasdaq)
+            // 1. TOP STATUS COCKPIT
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Später greifen wir hier auf die Live-Scores des ViewModels zu
                 StatusHeaderItem("SYSTEM", 4.5)
                 StatusHeaderItem("S&P 500", 8.2)
                 StatusHeaderItem("NAS 100", 2.1)
@@ -70,7 +73,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 letterSpacing = 1.sp
             )
 
-            // Beispiel-Daten (später aus dem Repository)
             val watchlist = listOf("Apple", "Microsoft", "Tesla", "Nvidia", "Amazon")
 
             LazyColumn(
@@ -82,28 +84,57 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 }
             }
 
-            // 3. RESEARCH BUTTON
-            Button(
-                onClick = { /* Navigation zu Research Details */ },
+            // 3. EXPANDABLE RESEARCH SECTION (Market Intelligence)
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF0F4FF) // Sehr helles Blau als Button-Fläche
+                    .clickable { isExpanded = !isExpanded }, // Klick macht das Panel auf/zu
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF0F4FF)
                 )
             ) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = SentinelBlue)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "RESEARCH & BACKGROUND DATA",
-                    color = SentinelBlue,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = SentinelBlue)
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "MARKET INTELLIGENCE",
+                                color = SentinelBlue,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                        Text(
+                            text = if (isExpanded) "▲" else "▼",
+                            color = SentinelBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Sichtbarkeit der Details basierend auf isExpanded
+                    if (isExpanded) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Divider(color = SentinelBlue.copy(alpha = 0.1f))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Makro-Werte (Später aus dem ViewModel)
+                        DetailRow(label = "VIX (Volatility)", value = "23.5", color = SentinelOrange)
+                        DetailRow(label = "Skew Index", value = "145.2", color = SentinelBlue)
+                        DetailRow(label = "Global Liquidity (M2)", value = "$94.2T", color = SentinelTurquoise)
+                        DetailRow(label = "Fed Repo Flow", value = "$620B", color = SentinelTurquoise)
+                        DetailRow(label = "Truflation (yoy)", value = "2.8%", color = SentinelBlue)
+                    }
+                }
             }
 
-            // 4. MODUS ANZEIGE (Ganz unten)
+            // 4. MODUS ANZEIGE
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -116,7 +147,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                         text = "MARKUP B (Simulation)",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
-                        color = SentinelOrange // Orange signalisiert Simulation
+                        color = SentinelOrange
                     )
                 }
             }
@@ -126,11 +157,10 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
 @Composable
 fun StatusHeaderItem(label: String, score: Double) {
-    // Farblogik basierend auf deinen Vorgaben
     val color = when {
-        score >= 7.5 -> SentinelBlue   // Neutral / Gut
-        score >= 4.0 -> SentinelOrange // Bedenken
-        else -> SentinelRed           // Krisenmodus
+        score >= 7.5 -> SentinelBlue
+        score >= 4.0 -> SentinelOrange
+        else -> SentinelRed
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -168,7 +198,7 @@ fun WatchlistItem(name: String, score: Double) {
         Text(name, fontWeight = FontWeight.Bold, color = SentinelBlue, fontSize = 16.sp)
 
         Surface(
-            color = color.copy(alpha = 0.08f), // Dezenter Farbhintergrund für den Score
+            color = color.copy(alpha = 0.08f),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
@@ -179,5 +209,23 @@ fun WatchlistItem(name: String, score: Double) {
                 fontSize = 14.sp
             )
         }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }
