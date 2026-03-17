@@ -1,0 +1,2 @@
+# sentinelApp
+AdndroidApp zur Aktienmarktbeobachtung
