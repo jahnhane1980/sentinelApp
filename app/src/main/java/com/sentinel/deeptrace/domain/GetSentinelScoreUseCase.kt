@@ -5,15 +5,11 @@ import com.sentinel.deeptrace.data.repository.MarketRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class GetSentinelScoreUseCase(
-    private val repository: MarketRepository
-) {
-    suspend operator fun invoke(): Double = withContext(Dispatchers.Default) {
+class GetSentinelScoreUseCase(private val repository: MarketRepository) {
+    suspend operator fun invoke(): Double {
         val data = repository.getMacroData()
-
-        // WICHTIG: Kein 'val core = ...' mehr nötig!
-        // Wir greifen direkt auf das 'object' zu:
-        return@withContext SentinelCore.calculateScore(
+        // Hier greifen wir direkt auf das 'object' SentinelCore zu
+        return SentinelCore.calculateScore(
             usdJpy = data.usdJpy,
             fedRepoFlow = data.fedRepoFlow,
             vix = data.vix,

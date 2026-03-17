@@ -1,28 +1,34 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Sentinel Market Score", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Hier wird dein Score angezeigt!
         Text(
-            text = "SENTINEL SCORE: ${String.format("%.1f", viewModel.currentScore)}",
-            style = MaterialTheme.typography.headlineLarge
+            text = "Score: ${"%.1f".format(viewModel.currentScore)} / 10",
+            fontSize = 48.sp,
+            color = if (viewModel.currentScore < 5.0) Color.Red else Color.Green
         )
 
-        Button(onClick = { viewModel.toggleFrequency() }, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Intervall: ${viewModel.frequency}")
-        }
-
-        Button(onClick = { viewModel.updateAnalysis() }, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Refresh Data")
+        Spacer(modifier = Modifier.height(20.dp))
+        Button(onClick = { viewModel.updateAnalysis() }) {
+            Text("Update Analysis")
         }
     }
 }
