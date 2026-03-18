@@ -1,8 +1,10 @@
 package com.sentinel.deeptrace.ui.dashboard
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -11,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import com.sentinel.deeptrace.R
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.sentinel.deeptrace.data.db.WatchlistWithDetails
-import com.sentinel.deeptrace.ui.dashboard.components.*
-import com.sentinel.deeptrace.ui.dashboard.dialogs.*
+import com.sentinel.deeptrace.ui.dashboard.components.MarketIntelligenceCard
+import com.sentinel.deeptrace.ui.dashboard.components.WatchlistItemComponent
+import com.sentinel.deeptrace.ui.dashboard.dialogs.AddStockDialog
+import com.sentinel.deeptrace.ui.dashboard.dialogs.EditHoldingsDialog
 import com.sentinel.deeptrace.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +40,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 onClick = { showAddDialog = true },
                 containerColor = SentinelBlue,
                 contentColor = Color.White,
-                shape = MaterialTheme.shapes.small
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
             }
@@ -44,30 +48,28 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(SentinelDimens.SpacingMedium)
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp)
             ) {
-                item { SentinelHeader(watchlist = watchlistItems) }
-
                 item {
-                    marketData?.let { data ->
+                    marketData?.let {
                         MarketIntelligenceCard(
-                            data = data,
-                            systemHedges = watchlistItems.filter { it.isPermanent },
+                            data = it,
+                            systemHedges = watchlistItems.filter { asset -> asset.score >= 8.0 },
                             isExpanded = isIntelligenceExpanded,
                             onExpandClick = { isIntelligenceExpanded = !isIntelligenceExpanded }
                         )
                     }
-                    Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                items(watchlistItems.filter { !it.isPermanent }) { item ->
+                items(watchlistItems) { watchlistItem ->
                     WatchlistItemComponent(
-                        item = item,
-                        onDelete = { viewModel.removeStock(item.symbol) },
-                        onEdit = { editingAsset = item }
+                        item = watchlistItem,
+                        onDelete = { viewModel.removeStock(watchlistItem.symbol) },
+                        onEdit = { editingAsset = watchlistItem }
                     )
-                    Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
@@ -75,13 +77,9 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 onClick = { showSettings = true },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(SentinelDimens.SpacingSmall)
+                    .padding(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.label_settings),
-                    tint = SentinelBlue.copy(alpha = 0.7f)
-                )
+                Icon(Icons.Default.Settings, null, tint = SentinelBlue.copy(alpha = 0.7f))
             }
         }
     }
@@ -104,9 +102,34 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
     }
 
     if (showSettings) {
-        SettingsSheet(
-            onDismiss = { showSettings = false },
-            viewModel = viewModel // FIX: ViewModel wird nun korrekt übergeben
-        )
+        SettingsSheet(onDismiss = { showSettings = false }, viewModel = viewModel)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsSheet(onDismiss: () -> Unit, viewModel: SentinelViewModel) {
+    val context = LocalContext.current
+    var settingsChanged by remember { mutableStateOf(false) }
+
+    val handleDismiss = {
+        if (settingsChanged) {
+            Toast.makeText(context, "Einstellungen wurden aktualisiert", Toast.LENGTH_SHORT).show()
+        }
+        onDismiss()
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = handleDismiss,
+        containerColor = SentinelBackground,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = SentinelBlue) }
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
+            SettingsScreen(
+                viewModel = viewModel,
+                modifier = Modifier.padding(bottom = 32.dp),
+                onSettingInteracted = { settingsChanged = true }
+            )
+        }
     }
 }

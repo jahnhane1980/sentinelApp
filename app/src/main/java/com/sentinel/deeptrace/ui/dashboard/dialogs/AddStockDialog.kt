@@ -5,18 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.sentinel.deeptrace.R
-import com.sentinel.deeptrace.config.AppConfig
 import com.sentinel.deeptrace.data.model.AssetMaster
 import com.sentinel.deeptrace.ui.dashboard.SentinelViewModel
 import com.sentinel.deeptrace.ui.theme.*
@@ -27,7 +23,6 @@ fun AddStockDialog(
     viewModel: SentinelViewModel
 ) {
     var query by remember { mutableStateOf("") }
-    // FIX: Wir holen die Vorschläge jetzt aus dem ViewModel
     val suggestions by viewModel.searchResults.collectAsState()
 
     var selectedAsset by remember { mutableStateOf<AssetMaster?>(null) }
@@ -36,14 +31,11 @@ fun AddStockDialog(
     var amount by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     val userCurrency by viewModel.userCurrency.collectAsState()
-    val availableCurrencies by viewModel.availableCurrencies.collectAsState()
-    var selectedCurrency by remember { mutableStateOf(userCurrency) }
+    val selectedCurrency by remember { mutableStateOf(userCurrency) }
 
-    val haptic = LocalHapticFeedback.current
-
-    // FIX: Die Suche wird getriggert, aber das Ergebnis kommt über den Flow oben
+    // FIX: Suche triggert jetzt sofort ab dem 1. Buchstaben
     LaunchedEffect(query) {
-        if (query.length >= 1 && isSearching) {
+        if (query.isNotEmpty() && isSearching) {
             viewModel.searchMasterAssets(query)
         }
     }
@@ -51,18 +43,19 @@ fun AddStockDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(containerColor = SentinelCardBlue)
+            // FIX: Rundung der Karte reduziert
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(modifier = Modifier.padding(SentinelDimens.SpacingMedium)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.add_asset_title),
+                    text = "Asset hinzufügen",
                     style = MaterialTheme.typography.titleLarge,
                     color = SentinelBlue,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (isSearching) {
                     OutlinedTextField(
@@ -70,54 +63,99 @@ fun AddStockDialog(
                         onValueChange = { query = it },
                         label = { Text("Symbol oder Name suchen") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        // FIX: Rundung des Textfeldes reduziert
+                        shape = RoundedCornerShape(4.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = SentinelBlue,
+                            unfocusedTextColor = SentinelBlue,
+                            focusedBorderColor = SentinelBlue
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                        items(suggestions) { asset ->
-                            ListItem(
-                                headlineContent = { Text(asset.fullName) },
-                                supportingContent = { Text(asset.symbol) },
-                                modifier = Modifier.clickable {
-                                    selectedAsset = asset
-                                    query = asset.fullName
-                                    isSearching = false
-                                }
-                            )
+                    Surface(
+                        modifier = Modifier.heightIn(max = 200.dp).fillMaxWidth(),
+                        color = Color.White,
+                        tonalElevation = 2.dp,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        LazyColumn {
+                            items(suggestions) { asset ->
+                                ListItem(
+                                    headlineContent = { Text(asset.fullName, color = SentinelBlue) },
+                                    supportingContent = { Text(asset.symbol, color = Color.Gray) },
+                                    modifier = Modifier.clickable {
+                                        selectedAsset = asset
+                                        query = asset.fullName
+                                        isSearching = false
+                                    },
+                                    colors = ListItemDefaults.colors(containerColor = Color.White)
+                                )
+                                Divider(color = Color.LightGray.copy(alpha = 0.5f))
+                            }
                         }
                     }
                 } else {
-                    // Anzeige des gewählten Assets und Transaktionsfelder
                     selectedAsset?.let { asset ->
-                        Text("Ausgewählt: ${asset.fullName} (${asset.symbol})", color = SentinelBlue)
-                        TextButton(onClick = { isSearching = true }) {
-                            Text("Suche ändern", color = Color.Gray)
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = SentinelBlue.copy(alpha = 0.05f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(asset.fullName, fontWeight = FontWeight.Bold, color = SentinelBlue)
+                                    Text(asset.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                }
+                                TextButton(onClick = {
+                                    isSearching = true
+                                    selectedAsset = null
+                                    query = ""
+                                }) {
+                                    Text("Ändern", color = SentinelBlue)
+                                }
+                            }
                         }
 
-                        TransactionFields(
-                            amount = amount,
-                            onAmountChange = { amount = it },
-                            price = price,
-                            onPriceChange = { price = it },
-                            selectedCurrency = selectedCurrency,
-                            onCurrencyChange = { selectedCurrency = it },
-                            availableCurrencies = availableCurrencies
-                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = amount,
+                                onValueChange = { amount = it },
+                                label = { Text("Menge") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(4.dp),
+                                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = SentinelBlue, unfocusedTextColor = SentinelBlue)
+                            )
+                            OutlinedTextField(
+                                value = price,
+                                onValueChange = { price = it },
+                                label = { Text("Preis") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(4.dp),
+                                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = SentinelBlue, unfocusedTextColor = SentinelBlue)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(SentinelDimens.SpacingSmall)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(SentinelDimens.ButtonHeight),
-                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        // FIX: Weniger Rundung für Buttons
+                        shape = RoundedCornerShape(4.dp),
                         border = BorderStroke(1.dp, SentinelBlue)
                     ) {
-                        Text(stringResource(R.string.btn_cancel), color = SentinelBlue)
+                        Text("Abbrechen", color = SentinelBlue)
                     }
 
                     Button(
@@ -133,11 +171,12 @@ fun AddStockDialog(
                             }
                         },
                         enabled = selectedAsset != null,
-                        modifier = Modifier.weight(1f).height(SentinelDimens.ButtonHeight),
-                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        // FIX: Weniger Rundung für Buttons
+                        shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
                     ) {
-                        Text(stringResource(R.string.btn_save))
+                        Text("Speichern", color = Color.White)
                     }
                 }
             }

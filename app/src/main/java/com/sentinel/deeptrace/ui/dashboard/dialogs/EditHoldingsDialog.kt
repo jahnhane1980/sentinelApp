@@ -1,21 +1,17 @@
 package com.sentinel.deeptrace.ui.dashboard.dialogs
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.window.Dialog
-import com.sentinel.deeptrace.R
-import com.sentinel.deeptrace.config.AppConfig
-import com.sentinel.deeptrace.data.db.WatchlistWithDetails
-import com.sentinel.deeptrace.ui.theme.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.sentinel.deeptrace.data.db.WatchlistWithDetails
+import com.sentinel.deeptrace.ui.theme.SentinelBlue
 
 @Composable
 fun EditHoldingsDialog(
@@ -24,116 +20,92 @@ fun EditHoldingsDialog(
     onDismiss: () -> Unit,
     onConfirm: (Double, Double, String) -> Unit
 ) {
-    // Zustände für die Eingabefelder
     var amount by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
-    var isBuy by remember { mutableStateOf(true) }
-
-    // Währung ist fixiert, wenn bereits Transaktionen existieren, sonst Standard aus Config
-    var selectedCurrency by remember {
-        mutableStateOf(item.currency ?: AppConfig.UserPreferences.DEFAULT_CURRENCY)
-    }
-
-    // Haptisches Feedback bereitstellen
-    val haptic = LocalHapticFeedback.current
+    var isSell by remember { mutableStateOf(false) }
+    val selectedCurrency by remember { mutableStateOf(item.currency ?: "EUR") }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SentinelDimens.SpacingMedium),
-            shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(containerColor = SentinelCardBlue)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            shape = RoundedCornerShape(8.dp), // Kanten-Fix
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(modifier = Modifier.padding(SentinelDimens.CardPadding)) {
-                // Titel
+            Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.label_transaction_title, item.name),
+                    text = "${item.symbol} Transaktion",
+                    style = MaterialTheme.typography.titleLarge,
                     color = SentinelBlue,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Kauf / Verkauf Switcher
-                TabRow(
-                    selectedTabIndex = if (isBuy) 0 else 1,
-                    containerColor = Color.Transparent,
-                    contentColor = SentinelBlue,
-                    divider = {} // Entfernt die Standard-Trennlinie für einen cleaner Look
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Tab(
-                        selected = isBuy,
-                        onClick = { isBuy = true },
-                        text = { Text(stringResource(R.string.label_buy)) }
+                    Text(
+                        text = if (isSell) "Verkauf (-)" else "Kauf (+)",
+                        color = if (isSell) Color.Red else Color(0xFF2E7D32),
+                        fontWeight = FontWeight.Bold
                     )
-                    Tab(
-                        selected = !isBuy,
-                        onClick = { isBuy = false },
-                        text = { Text(stringResource(R.string.label_sell)) }
+                    Switch(
+                        checked = isSell,
+                        onCheckedChange = { isSell = it },
+                        colors = SwitchDefaults.colors(checkedTrackColor = if (isSell) Color.Red else SentinelBlue)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Wiederverwendbare Eingabefelder (Menge, Preis, Währung)
-                TransactionFields(
-                    amount = amount,
-                    onAmountChange = { amount = it },
-                    price = price,
-                    onPriceChange = { price = it },
-                    selectedCurrency = selectedCurrency,
-                    onCurrencyChange = { selectedCurrency = it },
-                    availableCurrencies = availableCurrencies,
-                    isCurrencyLocked = item.currency != null // Währung sperren, wenn bereits gesetzt
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Menge") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp), // Kanten-Fix
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = SentinelBlue,
+                        unfocusedTextColor = SentinelBlue,
+                        focusedBorderColor = SentinelBlue
+                    )
                 )
 
-                Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Button-Reihe: Abbrechen & Buchen
-                Row(
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Gesamtpreis") },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(SentinelDimens.SpacingSmall)
-                ) {
-                    // ABBRECHEN
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(SentinelDimens.ButtonHeight),
-                        shape = MaterialTheme.shapes.small, // Eckiger Radius (4.dp)
-                        border = BorderStroke(1.dp, SentinelBlue)
-                    ) {
-                        Text(text = stringResource(R.string.btn_cancel), color = SentinelBlue)
-                    }
+                    shape = RoundedCornerShape(4.dp), // Kanten-Fix
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = SentinelBlue,
+                        unfocusedTextColor = SentinelBlue,
+                        focusedBorderColor = SentinelBlue
+                    )
+                )
 
-                    // BUCHEN
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text("Abbrechen", color = Color.Gray)
+                    }
                     Button(
                         onClick = {
-                            // Haptik auslösen, wenn in Config aktiviert
-                            if (AppConfig.HAPTIC_FEEDBACK_ENABLED) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            }
-
-                            val dAmount = amount.toDoubleOrNull() ?: 0.0
-                            val dPrice = price.toDoubleOrNull() ?: 0.0
-
-                            // Vorzeichen basierend auf Kauf/Verkauf setzen
-                            val finalAmount = if (isBuy) dAmount else -dAmount
-                            val finalPrice = if (isBuy) dPrice else -dPrice
-
-                            if (dAmount != 0.0) {
-                                onConfirm(finalAmount, finalPrice, selectedCurrency)
-                            }
+                            val a = amount.toDoubleOrNull() ?: 0.0
+                            val p = price.toDoubleOrNull() ?: 0.0
+                            val finalAmount = if (isSell) -a else a
+                            onConfirm(finalAmount, p, selectedCurrency)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(SentinelDimens.ButtonHeight),
-                        shape = MaterialTheme.shapes.small, // Eckiger Radius (4.dp)
-                        colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(4.dp), // Kanten-Fix
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isSell) Color.Red else SentinelBlue)
                     ) {
-                        Text(text = stringResource(R.string.btn_book_transaction))
+                        Text(if (isSell) "Buchen" else "Speichern", color = Color.White)
                     }
                 }
             }

@@ -63,4 +63,6 @@ dependencies {
 
     // DataStore (Permanente Speicherung von User-Einstellungen wie Währung/Haptik)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 }
