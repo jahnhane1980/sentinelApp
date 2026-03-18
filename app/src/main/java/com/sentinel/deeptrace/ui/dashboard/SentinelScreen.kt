@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.sentinel.deeptrace.R
+import com.sentinel.deeptrace.data.model.WatchlistItem
 import com.sentinel.deeptrace.ui.dashboard.components.*
 import com.sentinel.deeptrace.ui.dashboard.dialogs.*
 import com.sentinel.deeptrace.ui.theme.*
-import com.sentinel.deeptrace.data.model.WatchlistItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,15 +24,24 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
     var showAddDialog by remember { mutableStateOf(false) }
     var itemToEdit: WatchlistItem? by remember { mutableStateOf(null) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val data = viewModel.marketData
     val allWatchlistItems by viewModel.watchlist.collectAsState()
 
-    // Filtert die permanenten System-Hedges (Gold, Yen, SPX) heraus
     val systemHedges = allWatchlistItems.filter { it.isPermanent }
-    // Der Rest ist die normale User-Watchlist
     val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
 
+    // Feedback-Logik für Snackbars
+    LaunchedEffect(viewModel.uiErrorMessage) {
+        viewModel.uiErrorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = SentinelBackground,
         floatingActionButton = {
             FloatingActionButton(
@@ -43,47 +52,46 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.desc_add_asset))
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
                 .padding(horizontal = SentinelDimens.ScreenPadding)
         ) {
-            // Header Logo / App Name
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = SentinelDimens.HeaderVerticalPadding),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = "SENTINEL DEEP TRACE",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = SentinelBlue,
-                    modifier = Modifier.padding(top = SentinelDimens.SpacingSmall)
-                )
-            }
+            // App-Titel
+            Text(
+                text = "SENTINEL DEEP TRACE",
+                style = MaterialTheme.typography.labelLarge,
+                color = SentinelBlue,
+                modifier = Modifier.padding(vertical = SentinelDimens.HeaderVerticalPadding)
+            )
 
-            // Markt-Intelligenz Box (Aufklappbar)
-            data?.let { marketData ->
+            // Makro-Bereich (Market Intelligence)
+            if (data != null) {
                 MarketIntelligenceCard(
-                    data = marketData,
-                    systemHedges = systemHedges, // Hedges werden hier hineingereicht
+                    data = data,
+                    systemHedges = systemHedges,
                     isExpanded = isExpanded,
                     onExpandClick = { isExpanded = !isExpanded }
                 )
+            } else {
+                // Das ist der Ladebalken, der nur erscheint, solange 'data' null ist
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = SentinelBlue,
+                    trackColor = SentinelCardBlue
+                )
             }
 
-            // Watchlist Bereich
+            Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
+
+            // User-Watchlist
             Text(
                 text = stringResource(R.string.my_watchlist),
-                modifier = Modifier.padding(
-                    top = SentinelDimens.SpacingExtraLarge,
-                    bottom = SentinelDimens.SpacingSmall
-                ),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = SentinelDimens.SpacingSmall)
             )
 
             LazyColumn(
@@ -99,7 +107,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 }
             }
 
-            // Footer / Live Modus Indikator
+            // Footer
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

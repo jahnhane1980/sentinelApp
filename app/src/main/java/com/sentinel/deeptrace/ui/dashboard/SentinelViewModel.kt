@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sentinel.deeptrace.data.db.SentinelDatabase
 import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.data.model.MarketData
 import com.sentinel.deeptrace.data.repository.FakeMarketRepository
 import com.sentinel.deeptrace.data.repository.LocalWatchlistRepository
 import com.sentinel.deeptrace.domain.GetSentinelScoreUseCase
@@ -19,11 +20,15 @@ class SentinelViewModel(application: Application) : AndroidViewModel(application
 
     private val db = SentinelDatabase.getDatabase(application)
     private val watchlistRepo = LocalWatchlistRepository(db.watchlistDao())
-
     private val marketRepo = FakeMarketRepository()
     private val getSentinelScoreUseCase = GetSentinelScoreUseCase(marketRepo)
 
-    var marketData by mutableStateOf<com.sentinel.deeptrace.data.model.MarketData?>(null)
+    // Hält die Makro-Daten (VIX, Repo, etc.)
+    var marketData by mutableStateOf<MarketData?>(null)
+        private set
+
+    // State für Fehlermeldungen (z.B. Ticker existiert bereits)
+    var uiErrorMessage by mutableStateOf<String?>(null)
         private set
 
     val watchlist = watchlistRepo.getWatchlist().stateIn(
@@ -38,31 +43,49 @@ class SentinelViewModel(application: Application) : AndroidViewModel(application
 
     fun updateAnalysis() {
         viewModelScope.launch {
+            // Holt die Daten aus dem Fake-Repository über den UseCase
             marketData = getSentinelScoreUseCase()
         }
     }
 
-    fun addStock(symbol: String, name: String) {
-        viewModelScope.launch {
-            watchlistRepo.addStock(WatchlistItem(symbol = symbol, name = name))
-        }
+    fun clearError() {
+        uiErrorMessage = null
     }
 
-    fun removeStock(stock: WatchlistItem) {
-        if (stock.isPermanent) {
-            // Logik-Block: Permanente Items werden ignoriert
-            return
-        }
+    fun addStock(symbol: String, name: String) {
+        val cleanSymbol = symbol.uppercase().trim()
+        if (cleanSymbol.isEmpty()) return
+
         viewModelScope.launch {
-            watchlistRepo.removeStock(stock)
+            if (watchlistRepo.exists(cleanSymbol)) {
+                uiErrorMessage = "Ticker $cleanSymbol existiert bereits!"
+            } else {
+                watchlistRepo.addStock(WatchlistItem(symbol = cleanSymbol, name = name))
+            }
         }
     }
 
     fun updateStock(stock: WatchlistItem, newName: String, newSymbol: String) {
+        val cleanSymbol = newSymbol.uppercase().trim()
         viewModelScope.launch {
-            // Wir erstellen eine Kopie des Items mit den neuen Werten
-            val updatedStock = stock.copy(name = newName, symbol = newSymbol)
-            watchlistRepo.addStock(updatedStock) // .addStock nutzt OnConflictStrategy.REPLACE
+            if (stock.symbol == cleanSymbol) {
+                watchlistRepo.updateStock(stock.copy(name = newName))
+            } else {
+                if (watchlistRepo.exists(cleanSymbol)) {
+                    uiErrorMessage = "Symbol $cleanSymbol wird bereits verwendet!"
+                } else {
+                    watchlistRepo.removeStock(stock)
+                    watchlistRepo.addStock(WatchlistItem(symbol = cleanSymbol, name = newName))
+                }
+            }
+        }
+    }
+
+    fun removeStock(stock: WatchlistItem) {
+        if (!stock.isPermanent) {
+            viewModelScope.launch {
+                watchlistRepo.removeStock(stock)
+            }
         }
     }
 }

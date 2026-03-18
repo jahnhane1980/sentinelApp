@@ -6,11 +6,20 @@ import kotlinx.coroutines.flow.Flow
 
 class LocalWatchlistRepository(private val watchlistDao: WatchlistDao) {
 
-    // Diese Zeile verursachte den Fehler. Wir nutzen jetzt den Namen aus dem DAO:
+    // Liefert den Live-Stream der Watchlist aus der DB
     fun getWatchlist(): Flow<List<WatchlistItem>> = watchlistDao.getAllItems()
+
+    // Prüft, ob ein Ticker-Symbol bereits existiert (wichtig für UI-Feedback)
+    suspend fun exists(symbol: String): Boolean {
+        return watchlistDao.exists(symbol)
+    }
 
     suspend fun addStock(stock: WatchlistItem) {
         watchlistDao.insertStock(stock)
+    }
+
+    suspend fun updateStock(stock: WatchlistItem) {
+        watchlistDao.updateStock(stock)
     }
 
     suspend fun removeStock(stock: WatchlistItem) {
