@@ -1,19 +1,18 @@
 package com.sentinel.deeptrace.ui.dashboard.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.sentinel.deeptrace.R
 import com.sentinel.deeptrace.data.db.WatchlistWithDetails
 import com.sentinel.deeptrace.ui.theme.*
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.Alignment
 
 @Composable
 fun EditHoldingsDialog(
@@ -34,7 +33,11 @@ fun EditHoldingsDialog(
             colors = CardDefaults.cardColors(containerColor = SentinelCardBlue)
         ) {
             Column(modifier = Modifier.padding(SentinelDimens.CardPadding)) {
-                Text(stringResource(R.string.label_transaction_title, item.name), color = SentinelBlue, fontWeight = FontWeight.Bold)
+                Text(
+                    text = stringResource(R.string.label_transaction_title, item.name),
+                    color = SentinelBlue,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
 
@@ -66,16 +69,34 @@ fun EditHoldingsDialog(
 
                 Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
 
-                Button(
-                    onClick = {
-                        val dAmount = (amount.toDoubleOrNull() ?: 0.0) * (if (isBuy) 1 else -1)
-                        val dPrice = (price.toDoubleOrNull() ?: 0.0) * (if (isBuy) 1 else -1)
-                        onConfirm(dAmount, dPrice, selectedCurrency)
-                    },
-                    modifier = Modifier.fillMaxWidth().height(SentinelDimens.ButtonHeight),
-                    colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SentinelDimens.SpacingSmall)
                 ) {
-                    Text(stringResource(R.string.btn_book_transaction))
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(SentinelDimens.ButtonHeight),
+                        shape = MaterialTheme.shapes.small,
+                        border = BorderStroke(1.dp, SentinelBlue)
+                    ) {
+                        Text(stringResource(R.string.btn_cancel), color = SentinelBlue)
+                    }
+
+                    Button(
+                        onClick = {
+                            val factor = if (isBuy) 1.0 else -1.0
+                            onConfirm(
+                                (amount.toDoubleOrNull() ?: 0.0) * factor,
+                                (price.toDoubleOrNull() ?: 0.0) * factor,
+                                selectedCurrency
+                            )
+                        },
+                        modifier = Modifier.weight(1f).height(SentinelDimens.ButtonHeight),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
+                    ) {
+                        Text(stringResource(R.string.btn_book_transaction))
+                    }
                 }
             }
         }

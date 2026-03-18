@@ -24,8 +24,7 @@ fun TransactionFields(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column {
-        // Währungsauswahl
+    Column(verticalArrangement = Arrangement.spacedBy(SentinelDimens.SpacingSmall)) {
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { if (!isCurrencyLocked) expanded = it }
@@ -37,7 +36,8 @@ fun TransactionFields(
                 label = { Text(stringResource(R.string.label_currency)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier.menuAnchor().fillMaxWidth(),
-                enabled = !isCurrencyLocked
+                enabled = !isCurrencyLocked,
+                shape = MaterialTheme.shapes.small
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -55,24 +55,22 @@ fun TransactionFields(
             }
         }
 
-        Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
-
-        // Anzahl Anteile
         OutlinedTextField(
             value = amount,
             onValueChange = onAmountChange,
             label = { Text(stringResource(R.string.label_amount)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small
         )
 
-        // Gesamtpreis
         OutlinedTextField(
             value = price,
             onValueChange = onPriceChange,
             label = { Text(stringResource(R.string.label_total_price, selectedCurrency)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small
         )
     }
 }
