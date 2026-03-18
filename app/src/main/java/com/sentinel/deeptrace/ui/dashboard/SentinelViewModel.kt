@@ -1,115 +1,66 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import android.app.Application
-import androidx.compose.runtime.*
-import androidx.lifecycle.*
-import com.sentinel.deeptrace.R
-import com.sentinel.deeptrace.data.db.SentinelDatabase
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.sentinel.deeptrace.data.db.WatchlistWithDetails
-import com.sentinel.deeptrace.data.model.*
-import com.sentinel.deeptrace.data.repository.*
-import com.sentinel.deeptrace.domain.GetSentinelScoreUseCase
+import com.sentinel.deeptrace.data.model.AssetMaster
+import com.sentinel.deeptrace.data.model.MarketData
+import com.sentinel.deeptrace.data.repository.WatchlistRepository
+import com.sentinel.deeptrace.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class SentinelViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = SentinelDatabase.getDatabase(application)
-    private val watchlistRepo = LocalWatchlistRepository(db.watchlistDao())
+class SentinelViewModel(
+    private val watchlistRepository: WatchlistRepository,
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
 
-    // Annahme: Dein UseCase für die Markt-Analyse
-    private val getSentinelScoreUseCase = GetSentinelScoreUseCase(FakeMarketRepository())
+    val marketData: MarketData? = watchlistRepository.getMockMarketData()
 
-    // --- UI State ---
-    var marketData by mutableStateOf<MarketData?>(null)
-    var uiErrorMessage by mutableStateOf<String?>(null)
+    val watchlist: StateFlow<List<WatchlistWithDetails>> = watchlistRepository.getWatchlistWithDetails()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Watchlist-Stream: Dank des SQL-Joins im DAO kommen hier
-    // die summierten Holdings & Invested Capital direkt an.
-    val watchlist = watchlistRepo.getWatchlist().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val userCurrency: StateFlow<String> = settingsRepository.defaultCurrency
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "EUR")
 
-    // Währungen dynamisch aus der Markets-Tabelle laden
-    val availableCurrencies = flow {
-        emit(db.watchlistDao().getAllMarketCurrencies().distinct())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, listOf("EUR", "USD"))
+    val isHapticActive: StateFlow<Boolean> = settingsRepository.hapticEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    init {
-        updateAnalysis()
-    }
+    val availableCurrencies = watchlistRepository.getAvailableCurrencies()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("EUR", "USD"))
 
-    // --- Kern-Funktionen ---
+    // --- NEU: Suchlogik ---
+    private val _searchResults = MutableStateFlow<List<AssetMaster>>(emptyList())
+    val searchResults: StateFlow<List<AssetMaster>> = _searchResults.asStateFlow()
 
-    fun updateAnalysis() {
+    fun searchMasterAssets(query: String) {
         viewModelScope.launch {
-            marketData = getSentinelScoreUseCase()
-        }
-    }
-
-    fun clearError() {
-        uiErrorMessage = null
-    }
-
-    suspend fun searchMasterAssets(query: String): List<AssetMaster> {
-        return watchlistRepo.searchMasterAssets(query)
-    }
-
-    /**
-     * Fügt ein Asset zur Watchlist hinzu.
-     */
-    fun addStockWithValidation(symbol: String, name: String) {
-        val app = getApplication<Application>()
-        viewModelScope.launch {
-            val exists = watchlistRepo.exists(symbol)
-            if (exists) {
-                uiErrorMessage = app.getString(R.string.error_already_in_watchlist, symbol)
+            if (query.length >= 2) {
+                _searchResults.value = watchlistRepository.searchAssets(query)
             } else {
-                watchlistRepo.addStock(WatchlistItem(symbol = symbol))
+                _searchResults.value = emptyList()
             }
         }
     }
 
-    /**
-     * Bucht eine neue Transaktion (Kauf oder Verkauf).
-     * Das Repository schreibt in die 'transactions' Tabelle.
-     */
-    fun bookTransaction(symbol: String, deltaHoldings: Double, deltaCapital: Double, currency: String) {
-        val app = getApplication<Application>()
-        viewModelScope.launch {
-            // 1. Konsistenz-Check: Hat das Asset bereits eine fixierte Währung?
-            // Wir prüfen das direkt über das nackte Watchlist-Objekt (Internal)
-            val currentItem = watchlistRepo.getWatchlistItemInternal(symbol)
-
-            // Falls das Asset bereits Transaktionen hat, ziehen wir uns die Währung
-            // der ersten Transaktion zur Validierung.
-            val fixatedCurrency = watchlist.value.find { it.symbol == symbol }?.currency
-
-            if (fixatedCurrency != null && fixatedCurrency != currency) {
-                uiErrorMessage = app.getString(R.string.error_currency_mismatch, fixatedCurrency)
-                return@launch
-            }
-
-            // 2. Transaktion erstellen
-            val newTransaction = Transaction(
-                symbol = symbol,
-                amount = deltaHoldings,
-                totalPrice = deltaCapital,
-                currency = currency
-            )
-
-            // 3. In DB speichern
-            watchlistRepo.addTransaction(newTransaction)
-
-            // HINWEIS: Da 'watchlist' ein Flow ist, der auf der transactions-Tabelle joint,
-            // aktualisiert sich die UI jetzt vollautomatisch!
-        }
+    // --- Aktionen ---
+    fun addStockWithValidation(symbol: String, name: String) {
+        viewModelScope.launch { watchlistRepository.addAsset(symbol, name) }
     }
 
     fun removeStock(symbol: String) {
-        viewModelScope.launch {
-            watchlistRepo.removeStock(symbol)
-        }
+        viewModelScope.launch { watchlistRepository.deleteAsset(symbol) }
+    }
+
+    fun bookTransaction(symbol: String, amount: Double, price: Double, currency: String) {
+        viewModelScope.launch { watchlistRepository.addTransaction(symbol, amount, price, currency) }
+    }
+
+    fun updateDefaultCurrency(currency: String) {
+        viewModelScope.launch { settingsRepository.updateCurrency(currency) }
+    }
+
+    fun toggleHaptic(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateHaptic(enabled) }
     }
 }

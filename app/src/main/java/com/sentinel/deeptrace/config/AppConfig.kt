@@ -28,6 +28,10 @@ object AppConfig {
         const val VIX_SQUEEZE_ALERT = 25.0
     }
 
+    object UserPreferences {
+        const val DEFAULT_CURRENCY = "EUR"
+        const val SHOW_EMPTY_PORTFOLIO_MESSAGE = true
+    }
     // --- UI Defaults ---
     val DEFAULT_CHART_COLOR = SentinelBlue
     const val HAPTIC_FEEDBACK_ENABLED = true

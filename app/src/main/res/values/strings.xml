@@ -39,9 +39,16 @@
     <string name="action_delete">Löschen</string>
     <string name="action_edit">Bearbeiten</string>
 
+    <string name="header_total_invested">TOTAL INVESTED CAPITAL</string>
+
     <string name="error_ticker_not_found">Ticker %1$s wurde im Katalog nicht gefunden.</string>
     <string name="error_name_mismatch">Name für %1$s stimmt nicht mit Katalog überein.</string>
     <string name="error_already_in_watchlist">%1$s befindet sich bereits in deiner Watchlist.</string>
     <string name="error_currency_mismatch">Fehler: Dieses Asset wird bereits in %1$s geführt!</string>
     <string name="error_generic">Ein unerwarteter Fehler ist aufgetreten.</string>
+
+    <string name="currency_eur">EUR</string>
+    <string name="currency_usd">USD</string>
+    <string name="default_empty_balance">0,00 %1$s</string>
+    <string name="label_settings">Einstellungen</string>
 </resources>

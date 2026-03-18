@@ -1,27 +1,17 @@
 package com.sentinel.deeptrace.data.db
 
 import androidx.room.*
-import com.sentinel.deeptrace.data.model.* // Importiert: WatchlistItem, AssetMaster, Market, Transaction
+// Wir importieren deine spezifische Transaction-Klasse
 import com.sentinel.deeptrace.data.model.Transaction
+import com.sentinel.deeptrace.data.model.Market
+import com.sentinel.deeptrace.data.model.AssetMaster
+import com.sentinel.deeptrace.data.model.WatchlistItem
 import kotlinx.coroutines.flow.Flow
-
-/**
- * UI-Modell für die Watchlist inkl. Portfolio-Berechnungen.
- * Hinweis: Room benötigt für berechnete Felder in @Query keine @Entity-Annotation hier.
- */
-data class WatchlistWithDetails(
-    val symbol: String,
-    val name: String,
-    val marketName: String,
-    val score: Double,
-    val isPermanent: Boolean,
-    val totalHoldings: Double = 0.0,
-    val totalInvested: Double = 0.0,
-    val currency: String? = null
-)
 
 @Dao
 interface WatchlistDao {
+
+    // --- Master Data (Asset Katalog) ---
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMarket(market: Market): Long
@@ -29,19 +19,18 @@ interface WatchlistDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAssetMaster(asset: AssetMaster)
 
-    @Query("SELECT region FROM markets")
-    suspend fun getAllMarketCurrencies(): List<String>
-
     @Query("SELECT * FROM assets_master WHERE symbol LIKE :query OR fullName LIKE :query LIMIT 15")
     suspend fun searchAssets(query: String): List<AssetMaster>
 
-    @Query("SELECT * FROM assets_master WHERE symbol = :symbol")
+    @Query("SELECT * FROM assets_master WHERE symbol = :symbol LIMIT 1")
     suspend fun getAssetBySymbol(symbol: String): AssetMaster?
+
+    // --- Watchlist Kern-Funktionen ---
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertWatchlist(item: WatchlistItem)
 
-    @Query("SELECT * FROM watchlist WHERE symbol = :symbol")
+    @Query("SELECT * FROM watchlist WHERE symbol = :symbol LIMIT 1")
     suspend fun getWatchlistItemBySymbol(symbol: String): WatchlistItem?
 
     @Query("SELECT EXISTS(SELECT * FROM watchlist WHERE symbol = :symbol)")
@@ -50,14 +39,22 @@ interface WatchlistDao {
     @Delete
     suspend fun deleteWatchlist(item: WatchlistItem)
 
-    // --- Portfolio & Transaktionen ---
+    @Query("DELETE FROM watchlist WHERE symbol = :symbol")
+    suspend fun deleteBySymbol(symbol: String)
 
+    // --- Transaktionen & Portfolio ---
+
+    // Hier wird nun deine Transaction-Klasse aus den Models genutzt
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction)
 
     @Query("SELECT * FROM transactions WHERE symbol = :symbol ORDER BY timestamp DESC")
     fun getTransactionsForAsset(symbol: String): Flow<List<Transaction>>
 
+    /**
+     * Die Haupt-Query für das Dashboard.
+     * Nutzt die externe Klasse WatchlistWithDetails.
+     */
     @Query("""
         SELECT 
             w.symbol, 
@@ -73,7 +70,9 @@ interface WatchlistDao {
         JOIN markets m ON a.marketId = m.id
         LEFT JOIN transactions t ON w.symbol = t.symbol
         GROUP BY w.symbol
-        ORDER BY w.isPermanent DESC, w.addedAt DESC
     """)
     fun getWatchlistWithDetails(): Flow<List<WatchlistWithDetails>>
+
+    @Query("SELECT * FROM watchlist")
+    fun getWatchlist(): Flow<List<WatchlistItem>>
 }
