@@ -6,12 +6,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WatchlistDao {
-    @Query("SELECT * FROM watchlist ORDER BY addedAt DESC")
-    fun getAllStocks(): Flow<List<WatchlistItem>>
+    @Query("SELECT * FROM watchlist")
+    fun getAllItems(): Flow<List<WatchlistItem>> // Hier muss der Name übereinstimmen!
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStock(stock: WatchlistItem)
+    suspend fun insertStock(item: WatchlistItem)
 
     @Delete
-    suspend fun deleteStock(stock: WatchlistItem)
+    suspend fun deleteStock(item: WatchlistItem)
 }

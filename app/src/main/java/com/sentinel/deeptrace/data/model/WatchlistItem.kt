@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "watchlist")
 data class WatchlistItem(
-    @PrimaryKey val symbol: String, // z.B. "AAPL" oder "NVIDIA"
+    @PrimaryKey val symbol: String,
     val name: String,
     val score: Double = 0.0,
-    val addedAt: Long = System.currentTimeMillis()
+    val isPermanent: Boolean = false // NEU: Schützt vor Löschung
 )

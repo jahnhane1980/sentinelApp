@@ -5,7 +5,7 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // Dieser Import fehlte
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -88,6 +89,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
+                // Header Scores
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -109,6 +111,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     letterSpacing = 1.sp
                 )
 
+                // Watchlist mit Long-Press-Logik
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -117,11 +120,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                         WatchlistItem(
                             item = item,
                             onDelete = { viewModel.removeStock(item) },
-                            onEdit = { /* Edit Logic */ }
+                            onEdit = { /* Platzhalter für Edit-Dialog */ }
                         )
                     }
                 }
 
+                // Market Intelligence Card (Expandable)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,6 +159,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
+                // Status Anzeige unten
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = "Modus: ${if (data.isSimulation) "MARKUP B (Simulation)" else "LIVE MODE"}",
@@ -199,7 +204,18 @@ fun WatchlistItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(item.name, fontWeight = FontWeight.Bold, color = SentinelBlue, fontSize = 16.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(item.name, fontWeight = FontWeight.Bold, color = SentinelBlue, fontSize = 16.sp)
+                if (item.isPermanent) {
+                    Spacer(Modifier.width(8.dp))
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = "System-Hedge",
+                        modifier = Modifier.size(14.dp),
+                        tint = SentinelBlue.copy(alpha = 0.4f)
+                    )
+                }
+            }
             Surface(color = scoreColor.copy(alpha = 0.08f), shape = RoundedCornerShape(8.dp)) {
                 Text(
                     text = String.format("%.1f", item.score),
@@ -210,6 +226,7 @@ fun WatchlistItem(
             }
         }
 
+        // Aktions-Menü (Erscheint nach Long-Press)
         AnimatedVisibility(
             visible = showActions,
             enter = expandHorizontally(),
@@ -224,8 +241,19 @@ fun WatchlistItem(
                 }
                 Spacer(Modifier.width(8.dp))
                 IconButton(
-                    onClick = { onDelete(); showActions = false },
-                    modifier = Modifier.background(SentinelRed, RoundedCornerShape(8.dp)).size(40.dp)
+                    onClick = {
+                        if (!item.isPermanent) {
+                            onDelete()
+                            showActions = false
+                        }
+                    },
+                    modifier = Modifier
+                        .background(
+                            if (item.isPermanent) Color.Gray.copy(alpha = 0.3f) else SentinelRed,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .size(40.dp),
+                    enabled = !item.isPermanent
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
                 }
@@ -241,19 +269,19 @@ fun AddStockDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Aktie hinzufügen", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        title = { Text("Ticker hinzufügen", color = SentinelBlue, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = symbol,
                     onValueChange = { symbol = it.uppercase() },
-                    label = { Text("Symbol (z.B. AAPL)") },
+                    label = { Text("Symbol (z.B. BTC/USD)") },
                     singleLine = true
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name (z.B. Apple)") },
+                    label = { Text("Anzeigename") },
                     singleLine = true
                 )
             }

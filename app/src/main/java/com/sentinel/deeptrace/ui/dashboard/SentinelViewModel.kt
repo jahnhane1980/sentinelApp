@@ -49,6 +49,10 @@ class SentinelViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun removeStock(stock: WatchlistItem) {
+        if (stock.isPermanent) {
+            // Logik-Block: Permanente Items werden ignoriert
+            return
+        }
         viewModelScope.launch {
             watchlistRepo.removeStock(stock)
         }
