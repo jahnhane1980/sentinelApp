@@ -6,8 +6,9 @@ data class MarketData(
     val nasdaqScore: Double,
     val vix: Double,
     val skew: Double,
-    val globalLiquidityM2: String,
-    val fedRepoFlow: String,
+    val usdJpy: Double,
+    val globalLiquidityM2: Double, // Double statt String
+    val fedRepoFlow: Double,       // Double statt String
     val truflation: Double,
     val isSimulation: Boolean = true
 )

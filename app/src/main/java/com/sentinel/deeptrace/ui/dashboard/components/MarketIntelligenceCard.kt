@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.sentinel.deeptrace.R
@@ -21,7 +20,7 @@ import com.sentinel.deeptrace.ui.theme.*
 @Composable
 fun MarketIntelligenceCard(
     data: MarketData,
-    systemHedges: List<WatchlistItem>, // Die permanenten Items (Gold, Yen, etc.)
+    systemHedges: List<WatchlistItem>,
     isExpanded: Boolean,
     onExpandClick: () -> Unit
 ) {
@@ -33,7 +32,6 @@ fun MarketIntelligenceCard(
         shape = MaterialTheme.shapes.large
     ) {
         Column(modifier = Modifier.padding(SentinelDimens.CardPadding)) {
-            // Header: Titel und Expand-Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -54,7 +52,6 @@ fun MarketIntelligenceCard(
 
             Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
 
-            // Haupt-Scores (Immer sichtbar)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -64,27 +61,25 @@ fun MarketIntelligenceCard(
                 StatusHeaderItem(stringResource(R.string.header_nasdaq), data.nasdaqScore)
             }
 
-            // Ausklappbarer Bereich
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column {
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = SentinelDimens.SpacingMedium),
                         color = SentinelBlue.copy(alpha = 0.1f)
                     )
 
-                    // 1. Metriken (VIX, Liquidity, etc.)
+                    // FIX: Hier werden die Doubles in Strings umgewandelt
                     DetailRow(stringResource(R.string.label_vix), String.format("%.1f", data.vix))
-                    DetailRow(stringResource(R.string.label_fed_repo), data.fedRepoFlow)
-                    DetailRow(stringResource(R.string.label_liquidity), data.globalLiquidityM2)
+                    DetailRow(stringResource(R.string.label_fed_repo), "$${data.fedRepoFlow}B")
+                    DetailRow(stringResource(R.string.label_liquidity), "$${data.globalLiquidityM2}T")
                     DetailRow(stringResource(R.string.label_truflation), String.format("%.1f%%", data.truflation))
 
                     Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
 
-                    // 2. System-Hedges (Gold, Yen, SPX) - Zurückverschoben in die Box
                     systemHedges.forEach { item ->
                         SystemIntelligenceItem(item)
                         Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
