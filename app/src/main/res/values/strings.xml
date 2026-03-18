@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Sentinel Deep Trace</string>
     <string name="live_mode">SENTINEL LIVE MODUS</string>
+
     <string name="btn_save">Speichern</string>
     <string name="btn_cancel">Abbrechen</string>
 
@@ -18,7 +20,7 @@
     <string name="label_liquidity">Global Liquidity M2</string>
     <string name="label_truflation">Truflation (YoY)</string>
 
-    <string name="add_asset_title">Neuer Watchlist-Ticker</string>
+    <string name="add_asset_title">Neues Asset hinzufügen</string>
     <string name="edit_asset_title">Asset bearbeiten</string>
     <string name="label_ticker_symbol">Ticker Symbol (z.B. BTC)</string>
     <string name="label_display_name">Anzeigename</string>
@@ -31,4 +33,14 @@
     <string name="status_bullish">Stabil / Bullish</string>
     <string name="status_neutral">Neutral / Warnung</string>
     <string name="status_critical">Kritisch / Risiko</string>
+
+    <string name="error_ticker_not_found">Fehler: Ticker %1$s nicht im System gefunden.</string>
+    <string name="error_name_mismatch">Ungültige Daten: Name für %1$s darf nicht geändert werden.</string>
+    <string name="error_already_in_watchlist">%1$s ist bereits in deiner Watchlist.</string>
+
+    <string name="label_ticker_search">Ticker Symbol (suchen...)</string>
+    <string name="label_name_auto">Name (automatisch)</string>
+
+    <string name="action_edit">Asset bearbeiten</string>
+    <string name="action_delete">Asset entfernen</string>
 </resources>

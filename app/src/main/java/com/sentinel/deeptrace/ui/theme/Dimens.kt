@@ -3,16 +3,17 @@ package com.sentinel.deeptrace.ui.theme
 import androidx.compose.ui.unit.dp
 
 object SentinelDimens {
-    // Standard Abstände (Padding/Margin)
-    val SpacingSmall = 8.dp
-    val SpacingMedium = 16.dp
-    val SpacingLarge = 20.dp
+    val ScreenPadding = 16.dp
+    val HeaderVerticalPadding = 12.dp
+    val CardPadding = 16.dp
+    val ListSpacing = 8.dp
+
+    val SpacingSmall = 4.dp
+    val SpacingMedium = 8.dp
+    val SpacingLarge = 16.dp
     val SpacingExtraLarge = 24.dp
 
-    // Element-Spezifische Maße
-    val ButtonHeight = 52.dp
-    val CardPadding = 16.dp
-    val ScreenPadding = 20.dp
-    val ListSpacing = 10.dp
-    val HeaderVerticalPadding = 16.dp
+    // Fix für image_9542df.png:
+    val ButtonHeight = 48.dp
+    val MaxAutocompleteHeight = 150.dp
 }

@@ -10,17 +10,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import com.sentinel.deeptrace.R
 import com.sentinel.deeptrace.data.model.MarketData
-import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.data.db.WatchlistWithDetails // WICHTIGER IMPORT
 import com.sentinel.deeptrace.ui.theme.*
 
 @Composable
 fun MarketIntelligenceCard(
     data: MarketData,
-    systemHedges: List<WatchlistItem>,
+    systemHedges: List<WatchlistWithDetails>, // TYP HIER ANPASSEN
     isExpanded: Boolean,
     onExpandClick: () -> Unit
 ) {
@@ -61,18 +61,13 @@ fun MarketIntelligenceCard(
                 StatusHeaderItem(stringResource(R.string.header_nasdaq), data.nasdaqScore)
             }
 
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
+            AnimatedVisibility(visible = isExpanded) {
                 Column {
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = SentinelDimens.SpacingMedium),
                         color = SentinelBlue.copy(alpha = 0.1f)
                     )
 
-                    // FIX: Hier werden die Doubles in Strings umgewandelt
                     DetailRow(stringResource(R.string.label_vix), String.format("%.1f", data.vix))
                     DetailRow(stringResource(R.string.label_fed_repo), "$${data.fedRepoFlow}B")
                     DetailRow(stringResource(R.string.label_liquidity), "$${data.globalLiquidityM2}T")

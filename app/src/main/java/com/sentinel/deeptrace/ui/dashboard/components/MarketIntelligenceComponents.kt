@@ -9,10 +9,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.data.db.WatchlistWithDetails
 import com.sentinel.deeptrace.ui.theme.*
 import com.sentinel.deeptrace.config.AppConfig
 
+/**
+ * Kleine Komponente für die Kopfzeile (System, S&P 500, Nasdaq)
+ * Nutzt die Schwellenwerte aus der AppConfig für die farbliche Kennzeichnung.
+ */
 @Composable
 fun StatusHeaderItem(label: String, score: Double) {
     val color = when {
@@ -20,39 +24,88 @@ fun StatusHeaderItem(label: String, score: Double) {
         score >= AppConfig.Thresholds.SCORE_MEDIUM -> SentinelOrange
         else -> SentinelRed
     }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = String.format("%.1f", score), style = MaterialTheme.typography.headlineLarge, color = color)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text(
+            text = String.format("%.1f", score),
+            style = MaterialTheme.typography.headlineLarge,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Gray
+        )
     }
 }
 
+/**
+ * Eine einfache Zeile für Label-Wert-Paare innerhalb der MarketIntelligenceCard.
+ * Wird für VIX, Fed Repo Flow, etc. verwendet.
+ */
 @Composable
 fun DetailRow(label: String, value: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = SentinelDimens.SpacingSmall),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = SentinelDimens.SpacingSmall),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SentinelBlue)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.DarkGray
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = SentinelBlue
+        )
     }
 }
 
+/**
+ * Die permanenten Items (Gold, Yen, SPX) innerhalb der MarketIntelligenceCard.
+ * Zeigt den Namen aus dem AssetMaster und den Marktnamen an.
+ */
 @Composable
-fun SystemIntelligenceItem(item: WatchlistItem) {
+fun SystemIntelligenceItem(item: WatchlistWithDetails) {
     val color = when {
         item.score >= AppConfig.Thresholds.SCORE_HIGH -> SentinelBlue
         item.score >= AppConfig.Thresholds.SCORE_MEDIUM -> SentinelOrange
         else -> SentinelRed
     }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.7f), MaterialTheme.shapes.medium)
+            .background(
+                color = Color.White.copy(alpha = 0.7f),
+                shape = MaterialTheme.shapes.medium
+            )
             .padding(SentinelDimens.SpacingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = item.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = SentinelBlue)
-        Text(text = String.format("%.1f", item.score), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Black, color = color)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = SentinelBlue
+            )
+            Text(
+                text = "${item.symbol} | ${item.marketName}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+        }
+        Text(
+            text = String.format("%.1f", item.score),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Black,
+            color = color
+        )
     }
 }

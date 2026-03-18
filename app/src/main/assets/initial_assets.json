@@ -1,0 +1,27 @@
+{
+  "markets": [
+    { "id": 1, "name": "NASDAQ/NYSE", "region": "USA", "suffix": "" },
+    { "id": 2, "name": "XETRA", "region": "GER", "suffix": ".DE" },
+    { "id": 3, "name": "SYSTEM", "region": "GLOBAL", "suffix": "" }
+  ],
+  "assets": [
+    { "symbol": "AAPL", "name": "Apple Inc.", "marketId": 1 },
+    { "symbol": "MSFT", "name": "Microsoft Corp.", "marketId": 1 },
+    { "symbol": "NVDA", "name": "NVIDIA Corp.", "marketId": 1 },
+    { "symbol": "TSLA", "name": "Tesla Inc.", "marketId": 1 },
+    { "symbol": "GOOGL", "name": "Alphabet Inc.", "marketId": 1 },
+    { "symbol": "AMZN", "name": "Amazon.com Inc.", "marketId": 1 },
+    { "symbol": "VUSA", "name": "Vanguard S&P 500 ETF", "marketId": 1 },
+    { "symbol": "SAP", "name": "SAP SE", "marketId": 2 },
+    { "symbol": "SIE", "name": "Siemens AG", "marketId": 2 },
+    { "symbol": "ADS", "name": "Adidas AG", "marketId": 2 },
+    { "symbol": "DBK", "name": "Deutsche Bank AG", "marketId": 2 },
+    { "symbol": "VOW3", "name": "Volkswagen AG Vz.", "marketId": 2 },
+    { "symbol": "ALV", "name": "Allianz SE", "marketId": 2 },
+    { "symbol": "EXXT", "name": "iShares Nasdaq 100", "marketId": 2 },
+    { "symbol": "XAU/USD", "name": "Gold Spot", "marketId": 3, "isPermanent": true },
+    { "symbol": "USD/JPY", "name": "Yen Carry Trade", "marketId": 3, "isPermanent": true },
+    { "symbol": "SPX", "name": "S&P 500 Index", "marketId": 3, "isPermanent": true }
+  ],
+  "initial_watchlist": ["XAU/USD", "USD/JPY", "SPX", "SAP", "AAPL"]
+}

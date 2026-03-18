@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.sentinel.deeptrace.R
-import com.sentinel.deeptrace.data.model.WatchlistItem
 import com.sentinel.deeptrace.ui.dashboard.components.*
 import com.sentinel.deeptrace.ui.dashboard.dialogs.*
 import com.sentinel.deeptrace.ui.theme.*
@@ -22,20 +21,21 @@ import com.sentinel.deeptrace.ui.theme.*
 fun SentinelScreen(viewModel: SentinelViewModel) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
-    var itemToEdit: WatchlistItem? by remember { mutableStateOf(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val data = viewModel.marketData
-    val allWatchlistItems by viewModel.watchlist.collectAsState()
+    // Hier bekommen wir MarketData? (Optional)
+    val marketData = viewModel.marketData
 
-    val systemHedges = allWatchlistItems.filter { it.isPermanent }
-    val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
+    // Hier bekommen wir List<WatchlistWithDetails>
+    val watchlistItems by viewModel.watchlist.collectAsState()
 
-    // Feedback-Logik für Snackbars
+    val userWatchlist = watchlistItems.filter { !it.isPermanent }
+    val systemHedges = watchlistItems.filter { it.isPermanent }
+
     LaunchedEffect(viewModel.uiErrorMessage) {
-        viewModel.uiErrorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
+        viewModel.uiErrorMessage?.let {
+            snackbarHostState.showSnackbar(it)
             viewModel.clearError()
         }
     }
@@ -52,14 +52,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.desc_add_asset))
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .padding(padding)
                 .padding(horizontal = SentinelDimens.ScreenPadding)
         ) {
-            // App-Titel
             Text(
                 text = "SENTINEL DEEP TRACE",
                 style = MaterialTheme.typography.labelLarge,
@@ -67,16 +65,15 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 modifier = Modifier.padding(vertical = SentinelDimens.HeaderVerticalPadding)
             )
 
-            // Makro-Bereich (Market Intelligence)
-            if (data != null) {
+            // FIX: data?.let stellt sicher, dass 'it' nicht null ist
+            marketData?.let { data ->
                 MarketIntelligenceCard(
                     data = data,
                     systemHedges = systemHedges,
                     isExpanded = isExpanded,
                     onExpandClick = { isExpanded = !isExpanded }
                 )
-            } else {
-                // Das ist der Ladebalken, der nur erscheint, solange 'data' null ist
+            } ?: run {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = SentinelBlue,
@@ -84,9 +81,8 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(SentinelDimens.SpacingLarge))
+            Spacer(modifier = Modifier.height(SentinelDimens.SpacingExtraLarge))
 
-            // User-Watchlist
             Text(
                 text = stringResource(R.string.my_watchlist),
                 style = MaterialTheme.typography.labelSmall,
@@ -101,13 +97,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 items(userWatchlist) { item ->
                     WatchlistItemComponent(
                         item = item,
-                        onDelete = { viewModel.removeStock(item) },
-                        onEdit = { itemToEdit = item }
+                        onDelete = { viewModel.removeStock(item.symbol) },
+                        onEdit = { /* Deaktiviert */ }
                     )
                 }
             }
 
-            // Footer
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,25 +118,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
         }
     }
 
-    // Dialoge
     if (showAddDialog) {
-        AddStockDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { symbol, name ->
-                viewModel.addStock(symbol, name)
-                showAddDialog = false
-            }
-        )
-    }
-
-    itemToEdit?.let { item ->
-        EditStockDialog(
-            item = item,
-            onDismiss = { itemToEdit = null },
-            onConfirm = { newSymbol, newName ->
-                viewModel.updateStock(item, newName, newSymbol)
-                itemToEdit = null
-            }
-        )
+        AddStockDialog(onDismiss = { showAddDialog = false }, viewModel = viewModel)
     }
 }

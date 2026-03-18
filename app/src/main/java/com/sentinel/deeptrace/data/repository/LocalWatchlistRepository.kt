@@ -1,28 +1,26 @@
 package com.sentinel.deeptrace.data.repository
 
 import com.sentinel.deeptrace.data.db.WatchlistDao
-import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.data.db.WatchlistWithDetails
+import com.sentinel.deeptrace.data.model.*
 import kotlinx.coroutines.flow.Flow
 
 class LocalWatchlistRepository(private val watchlistDao: WatchlistDao) {
+    fun getWatchlist(): Flow<List<WatchlistWithDetails>> = watchlistDao.getWatchlistWithDetails()
 
-    // Liefert den Live-Stream der Watchlist aus der DB
-    fun getWatchlist(): Flow<List<WatchlistItem>> = watchlistDao.getAllItems()
+    // Wildcards (%) hier hinzufügen, damit das DAO nur den Text bekommt
+    suspend fun searchMasterAssets(query: String): List<AssetMaster> =
+        watchlistDao.searchAssets("%$query%")
 
-    // Prüft, ob ein Ticker-Symbol bereits existiert (wichtig für UI-Feedback)
-    suspend fun exists(symbol: String): Boolean {
-        return watchlistDao.exists(symbol)
-    }
+    suspend fun getMasterAsset(symbol: String): AssetMaster? =
+        watchlistDao.getAssetBySymbol(symbol)
 
-    suspend fun addStock(stock: WatchlistItem) {
-        watchlistDao.insertStock(stock)
-    }
+    suspend fun exists(symbol: String): Boolean =
+        watchlistDao.existsInWatchlist(symbol)
 
-    suspend fun updateStock(stock: WatchlistItem) {
-        watchlistDao.updateStock(stock)
-    }
+    suspend fun addStock(stock: WatchlistItem) =
+        watchlistDao.insertWatchlist(stock)
 
-    suspend fun removeStock(stock: WatchlistItem) {
-        watchlistDao.deleteStock(stock)
-    }
+    suspend fun removeStock(symbol: String) =
+        watchlistDao.deleteWatchlist(WatchlistItem(symbol = symbol))
 }
