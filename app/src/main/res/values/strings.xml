@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Sentinel Deep Trace</string>
     <string name="live_mode">SENTINEL LIVE MODUS</string>
+    <string name="btn_save">Speichern</string>
+    <string name="btn_cancel">Abbrechen</string>
 
     <string name="header_system">SYSTEM</string>
     <string name="header_sp500">S&amp;P 500</string>
@@ -13,18 +15,20 @@
     <string name="label_vix">VIX (Volatility)</string>
     <string name="label_skew">Skew Index</string>
     <string name="label_fed_repo">Fed Repo Flow</string>
+    <string name="label_liquidity">Global Liquidity M2</string>
+    <string name="label_truflation">Truflation (YoY)</string>
 
     <string name="add_asset_title">Neuer Watchlist-Ticker</string>
     <string name="edit_asset_title">Asset bearbeiten</string>
-
     <string name="label_ticker_symbol">Ticker Symbol (z.B. BTC)</string>
     <string name="label_display_name">Anzeigename</string>
-
-    <string name="btn_save">Speichern</string>
-    <string name="btn_cancel">Abbrechen</string>
 
     <string name="desc_add_asset">Asset hinzufügen</string>
     <string name="desc_edit_asset">Asset bearbeiten</string>
     <string name="desc_delete_asset">Asset löschen</string>
     <string name="desc_expand_intelligence">Markt-Intelligenz erweitern</string>
+
+    <string name="status_bullish">Stabil / Bullish</string>
+    <string name="status_neutral">Neutral / Warnung</string>
+    <string name="status_critical">Kritisch / Risiko</string>
 </resources>

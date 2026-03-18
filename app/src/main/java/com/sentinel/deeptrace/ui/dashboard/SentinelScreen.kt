@@ -1,6 +1,5 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,163 +27,113 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
     val data = viewModel.marketData
     val allWatchlistItems by viewModel.watchlist.collectAsState()
 
+    // Filtert die permanenten System-Hedges (Gold, Yen, SPX) heraus
     val systemHedges = allWatchlistItems.filter { it.isPermanent }
+    // Der Rest ist die normale User-Watchlist
     val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
 
     Scaffold(
         containerColor = SentinelBackground,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name).uppercase(),
-                        color = SentinelBlue,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = SentinelBackground)
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 containerColor = SentinelBlue,
-                contentColor = Color.White,
-                shape = MaterialTheme.shapes.large
+                contentColor = Color.White
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.desc_add_asset)
-                )
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.desc_add_asset))
             }
         }
-    ) { innerPadding ->
-
-        if (showAddDialog) {
-            AddStockDialog(
-                onDismiss = { showAddDialog = false },
-                onConfirm = { symbol, name ->
-                    viewModel.addStock(symbol, name)
-                    showAddDialog = false
-                }
-            )
-        }
-
-        itemToEdit?.let { currentItem ->
-            EditStockDialog(
-                item = currentItem,
-                onDismiss = { itemToEdit = null },
-                onConfirm = { newSymbol, newName ->
-                    viewModel.updateStock(currentItem, newName, newSymbol)
-                    itemToEdit = null
-                }
-            )
-        }
-
-        if (data == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = SentinelBlue)
-            }
-        } else {
-            Column(
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = SentinelDimens.ScreenPadding)
+        ) {
+            // Header Logo / App Name
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = SentinelDimens.ScreenPadding)
+                    .fillMaxWidth()
+                    .padding(vertical = SentinelDimens.HeaderVerticalPadding),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SentinelDimens.HeaderVerticalPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    StatusHeaderItem(stringResource(R.string.header_system), data.systemScore)
-                    StatusHeaderItem(stringResource(R.string.header_sp500), data.sp500Score)
-                    StatusHeaderItem(stringResource(R.string.header_nasdaq), data.nasdaqScore)
-                }
-
-                HorizontalDivider(color = SentinelDivider)
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = SentinelDimens.SpacingLarge)
-                        .clickable { isExpanded = !isExpanded },
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = SentinelCardBlue)
-                ) {
-                    Column(modifier = Modifier.padding(SentinelDimens.CardPadding)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Analytics, contentDescription = null, tint = SentinelBlue)
-                                Spacer(Modifier.width(SentinelDimens.SpacingSmall))
-                                Text(
-                                    text = stringResource(R.string.market_intelligence),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = SentinelBlue
-                                )
-                            }
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = stringResource(R.string.desc_expand_intelligence),
-                                tint = SentinelBlue
-                            )
-                        }
-
-                        if (isExpanded) {
-                            Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
-                            systemHedges.forEach { hedge ->
-                                SystemIntelligenceItem(hedge)
-                                Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
-                            }
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = SentinelDimens.SpacingSmall),
-                                color = SentinelBlue.copy(alpha = 0.1f)
-                            )
-                            DetailRow(stringResource(R.string.label_vix), data.vix.toString(), SentinelOrange)
-                            DetailRow(stringResource(R.string.label_skew), data.skew.toString(), SentinelBlue)
-                            DetailRow(stringResource(R.string.label_fed_repo), data.fedRepoFlow, SentinelTurquoise)
-                        }
-                    }
-                }
-
                 Text(
-                    text = stringResource(R.string.my_watchlist),
-                    modifier = Modifier.padding(top = SentinelDimens.SpacingExtraLarge, bottom = SentinelDimens.SpacingSmall),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    text = "SENTINEL DEEP TRACE",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = SentinelBlue,
+                    modifier = Modifier.padding(top = SentinelDimens.SpacingSmall)
                 )
+            }
 
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(SentinelDimens.ListSpacing)
-                ) {
-                    items(userWatchlist) { item ->
-                        WatchlistItemComponent(
-                            item = item,
-                            onDelete = { viewModel.removeStock(item) },
-                            onEdit = { itemToEdit = item }
-                        )
-                    }
-                }
+            // Markt-Intelligenz Box (Aufklappbar)
+            data?.let { marketData ->
+                MarketIntelligenceCard(
+                    data = marketData,
+                    systemHedges = systemHedges, // Hedges werden hier hineingereicht
+                    isExpanded = isExpanded,
+                    onExpandClick = { isExpanded = !isExpanded }
+                )
+            }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SentinelDimens.HeaderVerticalPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.live_mode),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = SentinelTurquoise
+            // Watchlist Bereich
+            Text(
+                text = stringResource(R.string.my_watchlist),
+                modifier = Modifier.padding(
+                    top = SentinelDimens.SpacingExtraLarge,
+                    bottom = SentinelDimens.SpacingSmall
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(SentinelDimens.ListSpacing)
+            ) {
+                items(userWatchlist) { item ->
+                    WatchlistItemComponent(
+                        item = item,
+                        onDelete = { viewModel.removeStock(item) },
+                        onEdit = { itemToEdit = item }
                     )
                 }
             }
+
+            // Footer / Live Modus Indikator
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = SentinelDimens.HeaderVerticalPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.live_mode),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = SentinelTurquoise
+                )
+            }
         }
+    }
+
+    // Dialoge
+    if (showAddDialog) {
+        AddStockDialog(
+            onDismiss = { showAddDialog = false },
+            onConfirm = { symbol, name ->
+                viewModel.addStock(symbol, name)
+                showAddDialog = false
+            }
+        )
+    }
+
+    itemToEdit?.let { item ->
+        EditStockDialog(
+            item = item,
+            onDismiss = { itemToEdit = null },
+            onConfirm = { newSymbol, newName ->
+                viewModel.updateStock(item, newName, newSymbol)
+                itemToEdit = null
+            }
+        )
     }
 }

@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.sentinel.deeptrace.data.model.WatchlistItem
 import com.sentinel.deeptrace.ui.theme.*
-import com.sentinel.deeptrace.ui.theme.SentinelDimens
 import com.sentinel.deeptrace.config.AppConfig
 
 @Composable
@@ -21,41 +20,20 @@ fun StatusHeaderItem(label: String, score: Double) {
         score >= AppConfig.Thresholds.SCORE_MEDIUM -> SentinelOrange
         else -> SentinelRed
     }
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = String.format("%.1f", score),
-            style = MaterialTheme.typography.headlineLarge, // Zentral gesteuert
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,    // Zentral gesteuert
-            color = Color.Gray
-        )
+        Text(text = String.format("%.1f", score), style = MaterialTheme.typography.headlineLarge, color = color)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
     }
 }
 
 @Composable
-fun DetailRow(label: String, value: String, color: Color) {
+fun DetailRow(label: String, value: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = SentinelDimens.SpacingSmall / 2),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth().padding(vertical = SentinelDimens.SpacingSmall),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = label,
-            color = Color.Gray,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text(
-            text = value,
-            color = color,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SentinelBlue)
     }
 }
 
@@ -69,32 +47,12 @@ fun SystemIntelligenceItem(item: WatchlistItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                color = Color.White.copy(alpha = 0.5f),
-                shape = MaterialTheme.shapes.medium
-            )
-            .padding(SentinelDimens.SpacingMedium), // Konsistenter Abstand
+            .background(Color.White.copy(alpha = 0.7f), MaterialTheme.shapes.medium)
+            .padding(SentinelDimens.SpacingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = item.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = SentinelBlue
-            )
-            Text(
-                text = item.symbol,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
-            )
-        }
-        Text(
-            text = String.format("%.1f", item.score),
-            style = MaterialTheme.typography.titleMedium, // Nutzt Theme statt Hart-Code
-            fontWeight = FontWeight.Black,
-            color = color
-        )
+        Text(text = item.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = SentinelBlue)
+        Text(text = String.format("%.1f", item.score), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Black, color = color)
     }
 }
