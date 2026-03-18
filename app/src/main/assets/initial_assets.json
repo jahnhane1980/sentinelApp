@@ -1,27 +1,67 @@
 {
   "markets": [
-    { "id": 1, "name": "NASDAQ/NYSE", "region": "USA", "suffix": "" },
+    { "id": 1, "name": "USA (NASDAQ/NYSE)", "region": "USA", "suffix": "" },
     { "id": 2, "name": "XETRA", "region": "GER", "suffix": ".DE" },
-    { "id": 3, "name": "SYSTEM", "region": "GLOBAL", "suffix": "" }
+    { "id": 3, "name": "SYSTEM/GLOBAL", "region": "GLOBAL", "suffix": "" }
   ],
   "assets": [
+    /* --- SEKTOR: NUKLEARENERGIE & URAN --- */
+    { "symbol": "CCJ", "name": "Cameco Corp (Uranium)", "marketId": 1 },
+    { "symbol": "URA", "name": "Global X Uranium ETF", "marketId": 1 },
+    { "symbol": "SMR", "name": "NuScale Power (Nuclear SMR)", "marketId": 1 },
+    { "symbol": "URNM", "name": "Sprott Uranium Miners ETF", "marketId": 1 },
+    { "symbol": "OKLO", "name": "Oklo Inc. (Nuclear Fission)", "marketId": 1 },
+
+    /* --- SEKTOR: BIOTECH --- */
+    { "symbol": "IBB", "name": "iShares Biotech ETF", "marketId": 1 },
+    { "symbol": "AMGN", "name": "Amgen Inc.", "marketId": 1 },
+    { "symbol": "VRTX", "name": "Vertex Pharmaceuticals", "marketId": 1 },
+    { "symbol": "BNTX", "name": "BioNTech SE (ADR)", "marketId": 1 },
+    { "symbol": "EVT", "name": "Evotec SE", "marketId": 2 },
+
+    /* --- SEKTOR: GOLD & EDELMETALLE --- */
+    { "symbol": "GLD", "name": "SPDR Gold Shares ETF", "marketId": 1 },
+    { "symbol": "GDX", "name": "VanEck Gold Miners ETF", "marketId": 1 },
+    { "symbol": "NEM", "name": "Newmont Corporation", "marketId": 1 },
+    { "symbol": "XAU/USD", "name": "Gold Spot Price", "marketId": 3, "isPermanent": true },
+    { "symbol": "EWG2", "name": "Euwax Gold II", "marketId": 2 },
+
+    /* --- HYPED SMALL CAPS --- */
+    { "symbol": "NVTS", "name": "Navitas Semiconductor", "marketId": 1 },
+    { "symbol": "ASTS", "name": "AST SpaceMobile", "marketId": 1 },
+    { "symbol": "LUNR", "name": "Intuitive Machines (Space)", "marketId": 1 },
+    { "symbol": "RKLB", "name": "Rocket Lab USA", "marketId": 1 },
+    { "symbol": "IONQ", "name": "IonQ Inc. (Quantum Computing)", "marketId": 1 },
+
+    /* --- TOP S&P 500 (AUSZUG) --- */
     { "symbol": "AAPL", "name": "Apple Inc.", "marketId": 1 },
     { "symbol": "MSFT", "name": "Microsoft Corp.", "marketId": 1 },
     { "symbol": "NVDA", "name": "NVIDIA Corp.", "marketId": 1 },
-    { "symbol": "TSLA", "name": "Tesla Inc.", "marketId": 1 },
     { "symbol": "GOOGL", "name": "Alphabet Inc.", "marketId": 1 },
     { "symbol": "AMZN", "name": "Amazon.com Inc.", "marketId": 1 },
-    { "symbol": "VUSA", "name": "Vanguard S&P 500 ETF", "marketId": 1 },
+    { "symbol": "META", "name": "Meta Platforms Inc.", "marketId": 1 },
+    { "symbol": "TSLA", "name": "Tesla Inc.", "marketId": 1 },
+    { "symbol": "LLY", "name": "Eli Lilly & Co.", "marketId": 1 },
+    { "symbol": "AVGO", "name": "Broadcom Inc.", "marketId": 1 },
+    { "symbol": "V", "name": "Visa Inc.", "marketId": 1 },
+
+    /* --- TOP DAX (AUSZUG) --- */
     { "symbol": "SAP", "name": "SAP SE", "marketId": 2 },
     { "symbol": "SIE", "name": "Siemens AG", "marketId": 2 },
-    { "symbol": "ADS", "name": "Adidas AG", "marketId": 2 },
-    { "symbol": "DBK", "name": "Deutsche Bank AG", "marketId": 2 },
-    { "symbol": "VOW3", "name": "Volkswagen AG Vz.", "marketId": 2 },
     { "symbol": "ALV", "name": "Allianz SE", "marketId": 2 },
-    { "symbol": "EXXT", "name": "iShares Nasdaq 100", "marketId": 2 },
-    { "symbol": "XAU/USD", "name": "Gold Spot", "marketId": 3, "isPermanent": true },
-    { "symbol": "USD/JPY", "name": "Yen Carry Trade", "marketId": 3, "isPermanent": true },
-    { "symbol": "SPX", "name": "S&P 500 Index", "marketId": 3, "isPermanent": true }
+    { "symbol": "DTE", "name": "Deutsche Telekom AG", "marketId": 2 },
+    { "symbol": "MBG", "name": "Mercedes-Benz Group", "marketId": 2 },
+    { "symbol": "BMW", "name": "BMW AG", "marketId": 2 },
+    { "symbol": "BAS", "name": "BASF SE", "marketId": 2 },
+    { "symbol": "BAYN", "name": "Bayer AG", "marketId": 2 },
+    { "symbol": "MUV2", "name": "Münchener Rück", "marketId": 2 },
+    { "symbol": "IFX", "name": "Infineon Technologies", "marketId": 2 }
   ],
-  "initial_watchlist": ["XAU/USD", "USD/JPY", "SPX", "SAP", "AAPL"]
+  "initial_watchlist": [
+    "XAU/USD",
+    "NVDA",
+    "ASTS",
+    "SAP",
+    "SMR"
+  ]
 }
