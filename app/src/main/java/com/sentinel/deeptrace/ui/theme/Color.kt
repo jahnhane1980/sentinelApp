@@ -2,13 +2,20 @@ package com.sentinel.deeptrace.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Deine Sentinel-Identität
-val SentinelBlue = Color(0xFF3366CC)
+// --- Sentinel Branding ---
+val SentinelBlue = Color(0xFF003366)
 val SentinelTurquoise = Color(0xFF40E0D0)
-val SentinelOrange = Color(0xFFFF8C00)
-val SentinelRed = Color(0xFFD32F2F)
+val SentinelBackground = Color(0xFFF8F9FA)
+val SentinelDivider = Color(0xFFE0E0E0)
 
-// Zusätzliche UI-Farben
-val SentinelBackground = Color.White
-val SentinelCardSurface = Color(0xFFFBFBFC)
-val SentinelDivider = Color.LightGray.copy(alpha = 0.3f)
+// --- Status Farben ---
+val SentinelOrange = Color(0xFFFF8C00)
+val SentinelRed = Color(0xFFCC0000)
+
+// --- Dark Mode Ergänzungen ---
+val DarkSurface = Color(0xFF1E1E1E)
+val DarkBackground = Color(0xFF121212)
+
+// --- Dashboard Spezifisch ---
+// Die helle Hintergrundfarbe für die Market-Intelligence Card
+val SentinelCardBlue = Color(0xFFF0F4FF)

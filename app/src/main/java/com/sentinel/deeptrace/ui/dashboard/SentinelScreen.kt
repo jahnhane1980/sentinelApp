@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -12,10 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource // Neu: Für Strings
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.sentinel.deeptrace.R
 import com.sentinel.deeptrace.ui.dashboard.components.*
 import com.sentinel.deeptrace.ui.dashboard.dialogs.*
@@ -27,7 +23,6 @@ import com.sentinel.deeptrace.data.model.WatchlistItem
 fun SentinelScreen(viewModel: SentinelViewModel) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
-
     var itemToEdit: WatchlistItem? by remember { mutableStateOf(null) }
 
     val data = viewModel.marketData
@@ -42,11 +37,9 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.app_name).uppercase(), // Aus XML
+                        text = stringResource(R.string.app_name).uppercase(),
                         color = SentinelBlue,
-                        fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.labelLarge,
-                        letterSpacing = 2.sp
+                        style = MaterialTheme.typography.labelLarge
                     )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = SentinelBackground)
@@ -57,9 +50,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 onClick = { showAddDialog = true },
                 containerColor = SentinelBlue,
                 contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp)
+                shape = MaterialTheme.shapes.large
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.desc_add_asset)
+                )
             }
         }
     ) { innerPadding ->
@@ -74,8 +70,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             )
         }
 
-        val currentItem = itemToEdit
-        if (currentItem != null) {
+        itemToEdit?.let { currentItem ->
             EditStockDialog(
                 item = currentItem,
                 onDismiss = { itemToEdit = null },
@@ -95,13 +90,14 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = SentinelDimens.ScreenPadding)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = SentinelDimens.HeaderVerticalPadding),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Strings jetzt aus XML
                     StatusHeaderItem(stringResource(R.string.header_system), data.systemScore)
                     StatusHeaderItem(stringResource(R.string.header_sp500), data.sp500Score)
                     StatusHeaderItem(stringResource(R.string.header_nasdaq), data.nasdaqScore)
@@ -112,12 +108,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp)
+                        .padding(top = SentinelDimens.SpacingLarge)
                         .clickable { isExpanded = !isExpanded },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF))
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = SentinelCardBlue)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(SentinelDimens.CardPadding)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -125,49 +121,47 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Analytics, contentDescription = null, tint = SentinelBlue)
-                                Spacer(Modifier.width(12.dp))
-                                // String aus XML
+                                Spacer(Modifier.width(SentinelDimens.SpacingSmall))
                                 Text(
                                     text = stringResource(R.string.market_intelligence),
-                                    color = SentinelBlue,
-                                    fontWeight = FontWeight.Bold
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = SentinelBlue
                                 )
                             }
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.desc_expand_intelligence),
                                 tint = SentinelBlue
                             )
                         }
 
                         if (isExpanded) {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(SentinelDimens.SpacingMedium))
                             systemHedges.forEach { hedge ->
                                 SystemIntelligenceItem(hedge)
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(SentinelDimens.SpacingSmall))
                             }
                             HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 12.dp),
+                                modifier = Modifier.padding(vertical = SentinelDimens.SpacingSmall),
                                 color = SentinelBlue.copy(alpha = 0.1f)
                             )
-                            DetailRow("VIX (Volatility)", data.vix.toString(), SentinelOrange)
-                            DetailRow("Skew Index", data.skew.toString(), SentinelBlue)
-                            DetailRow("Fed Repo Flow", data.fedRepoFlow, SentinelTurquoise)
+                            DetailRow(stringResource(R.string.label_vix), data.vix.toString(), SentinelOrange)
+                            DetailRow(stringResource(R.string.label_skew), data.skew.toString(), SentinelBlue)
+                            DetailRow(stringResource(R.string.label_fed_repo), data.fedRepoFlow, SentinelTurquoise)
                         }
                     }
                 }
 
                 Text(
-                    text = stringResource(R.string.my_watchlist), // String aus XML
-                    modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray,
-                    letterSpacing = 1.sp
+                    text = stringResource(R.string.my_watchlist),
+                    modifier = Modifier.padding(top = SentinelDimens.SpacingExtraLarge, bottom = SentinelDimens.SpacingSmall),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
                 )
 
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(SentinelDimens.ListSpacing)
                 ) {
                     items(userWatchlist) { item ->
                         WatchlistItemComponent(
@@ -178,12 +172,16 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = SentinelDimens.HeaderVerticalPadding),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = stringResource(R.string.live_mode), // String aus XML
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SentinelTurquoise,
-                        fontWeight = FontWeight.Bold
+                        text = stringResource(R.string.live_mode),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = SentinelTurquoise
                     )
                 }
             }

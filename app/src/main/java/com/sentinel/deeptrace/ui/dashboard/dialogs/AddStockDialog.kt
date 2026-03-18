@@ -1,15 +1,15 @@
 package com.sentinel.deeptrace.ui.dashboard.dialogs
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.sentinel.deeptrace.R
 import com.sentinel.deeptrace.ui.components.SentinelPrimaryButton
 import com.sentinel.deeptrace.ui.theme.SentinelBlue
+import com.sentinel.deeptrace.ui.theme.SentinelDimens
 
 @Composable
 fun AddStockDialog(
@@ -21,38 +21,59 @@ fun AddStockDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Neuer Watchlist-Ticker", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        title = {
+            Text(
+                text = stringResource(R.string.add_asset_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = SentinelBlue
+            )
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(SentinelDimens.SpacingSmall)) {
                 OutlinedTextField(
                     value = symbol,
                     onValueChange = { symbol = it.uppercase() },
-                    label = { Text("Symbol") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    label = { Text(stringResource(R.string.label_ticker_symbol), style = MaterialTheme.typography.labelSmall) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SentinelBlue,
+                        focusedLabelColor = SentinelBlue,
+                        cursorColor = SentinelBlue
+                    ),
+                    shape = MaterialTheme.shapes.medium,
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     singleLine = true
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Anzeigename") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    label = { Text(stringResource(R.string.label_display_name), style = MaterialTheme.typography.labelSmall) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SentinelBlue,
+                        focusedLabelColor = SentinelBlue,
+                        cursorColor = SentinelBlue
+                    ),
+                    shape = MaterialTheme.shapes.medium,
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     singleLine = true
                 )
             }
         },
         confirmButton = {
             SentinelPrimaryButton(
-                text = "Hinzufügen",
-                onClick = { onConfirm(symbol, name) },
-                modifier = Modifier.fillMaxWidth(0.5f)
+                text = stringResource(R.string.btn_save),
+                onClick = { onConfirm(symbol, name) }
             )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen", color = Color.Gray)
+                Text(
+                    text = stringResource(R.string.btn_cancel),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
+                )
             }
         },
         containerColor = Color.White,
-        shape = RoundedCornerShape(24.dp)
+        shape = MaterialTheme.shapes.extraLarge
     )
 }
