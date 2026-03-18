@@ -14,12 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sentinel.deeptrace.data.model.WatchlistItem
 import com.sentinel.deeptrace.ui.theme.*
+import com.sentinel.deeptrace.config.AppConfig // Neu: Import der Config
 
 @Composable
 fun StatusHeaderItem(label: String, score: Double) {
+    // Logik über AppConfig gesteuert
     val color = when {
-        score >= 7.5 -> SentinelBlue
-        score >= 4.0 -> SentinelOrange
+        score >= AppConfig.Thresholds.SCORE_HIGH -> SentinelBlue
+        score >= AppConfig.Thresholds.SCORE_MEDIUM -> SentinelOrange
         else -> SentinelRed
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -53,9 +55,10 @@ fun DetailRow(label: String, value: String, color: Color) {
 
 @Composable
 fun SystemIntelligenceItem(item: WatchlistItem) {
+    // Logik über AppConfig gesteuert
     val color = when {
-        item.score >= 7.5 -> SentinelBlue
-        item.score >= 4.0 -> SentinelOrange
+        item.score >= AppConfig.Thresholds.SCORE_HIGH -> SentinelBlue
+        item.score >= AppConfig.Thresholds.SCORE_MEDIUM -> SentinelOrange
         else -> SentinelRed
     }
     Row(

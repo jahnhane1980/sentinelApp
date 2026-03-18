@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource // Neu: Für Strings
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sentinel.deeptrace.R
 import com.sentinel.deeptrace.ui.dashboard.components.*
 import com.sentinel.deeptrace.ui.dashboard.dialogs.*
 import com.sentinel.deeptrace.ui.theme.*
@@ -23,20 +25,14 @@ import com.sentinel.deeptrace.data.model.WatchlistItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
-    // UI States
     var isExpanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
 
-    // Fix für Typ-Inferenz (State für den Edit-Dialog)
-    var itemToEdit: WatchlistItem? by remember {
-        mutableStateOf(null)
-    }
+    var itemToEdit: WatchlistItem? by remember { mutableStateOf(null) }
 
-    // Daten aus dem ViewModel
     val data = viewModel.marketData
     val allWatchlistItems by viewModel.watchlist.collectAsState()
 
-    // Filterung der Watchlist
     val systemHedges = allWatchlistItems.filter { it.isPermanent }
     val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
 
@@ -46,16 +42,14 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "SENTINEL DEEP TRACE",
+                        text = stringResource(R.string.app_name).uppercase(), // Aus XML
                         color = SentinelBlue,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.labelLarge,
                         letterSpacing = 2.sp
                     )
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = SentinelBackground
-                )
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = SentinelBackground)
             )
         },
         floatingActionButton = {
@@ -65,12 +59,11 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Asset")
+                Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
     ) { innerPadding ->
 
-        // --- Dialog-Logik ---
         if (showAddDialog) {
             AddStockDialog(
                 onDismiss = { showAddDialog = false },
@@ -81,7 +74,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             )
         }
 
-        // Stabiler Check statt .let für den Edit-Dialog
         val currentItem = itemToEdit
         if (currentItem != null) {
             EditStockDialog(
@@ -94,7 +86,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             )
         }
 
-        // --- Haupt-Content ---
         if (data == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = SentinelBlue)
@@ -106,19 +97,18 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
-                // Score Header (Jetzt aus MarketIntelligenceComponents)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    StatusHeaderItem("SYSTEM", data.systemScore)
-                    StatusHeaderItem("S&P 500", data.sp500Score)
-                    StatusHeaderItem("NAS 100", data.nasdaqScore)
+                    // Strings jetzt aus XML
+                    StatusHeaderItem(stringResource(R.string.header_system), data.systemScore)
+                    StatusHeaderItem(stringResource(R.string.header_sp500), data.sp500Score)
+                    StatusHeaderItem(stringResource(R.string.header_nasdaq), data.nasdaqScore)
                 }
 
                 HorizontalDivider(color = SentinelDivider)
 
-                // Market Intelligence Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -136,7 +126,12 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Analytics, contentDescription = null, tint = SentinelBlue)
                                 Spacer(Modifier.width(12.dp))
-                                Text("MARKET INTELLIGENCE", color = SentinelBlue, fontWeight = FontWeight.Bold)
+                                // String aus XML
+                                Text(
+                                    text = stringResource(R.string.market_intelligence),
+                                    color = SentinelBlue,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -162,9 +157,8 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                // User Watchlist
                 Text(
-                    "MY WATCHLIST",
+                    text = stringResource(R.string.my_watchlist), // String aus XML
                     modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.Gray,
@@ -184,10 +178,9 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                // Footer
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "SENTINEL LIVE MODE",
+                        text = stringResource(R.string.live_mode), // String aus XML
                         style = MaterialTheme.typography.bodySmall,
                         color = SentinelTurquoise,
                         fontWeight = FontWeight.Bold

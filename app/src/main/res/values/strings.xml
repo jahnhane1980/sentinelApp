@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Sentinel Deep Trace</string>
+    <string name="header_system">SYSTEM</string>
+    <string name="header_sp500">S&amp;P 500</string>
+    <string name="header_nasdaq">NAS 100</string>
+    <string name="market_intelligence">MARKT-INTELLIGENZ</string>
+    <string name="my_watchlist">MEINE WATCHLIST</string>
+    <string name="live_mode">SENTINEL LIVE MODUS</string>
 </resources>
