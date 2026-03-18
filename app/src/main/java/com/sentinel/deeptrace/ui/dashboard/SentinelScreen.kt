@@ -36,7 +36,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
     val data = viewModel.marketData
     val allWatchlistItems by viewModel.watchlist.collectAsState()
 
-    // FILTERUNG: System-Hedges für Market Intelligence vs. User-Watchlist
+    // Trennung von System-Analysen und User-Einträgen
     val systemHedges = allWatchlistItems.filter { it.isPermanent }
     val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
 
@@ -68,7 +68,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
         }
     ) { innerPadding ->
 
-        // Dialoge
+        // --- Dialog Steuerung ---
         if (showAddDialog) {
             AddStockDialog(
                 onDismiss = { showAddDialog = false },
@@ -90,6 +90,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             )
         }
 
+        // --- UI Content ---
         if (data == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = SentinelBlue)
@@ -101,7 +102,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
-                // Top Scores
+                // Cockpit Scores
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -113,7 +114,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
                 Divider(color = SentinelDivider)
 
-                // ABSCHNITT 1: MARKET INTELLIGENCE (Die fixen Hedges)
+                // Market Intelligence (System Hedges)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -138,24 +139,19 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
                         if (isExpanded) {
                             Spacer(modifier = Modifier.height(16.dp))
-
-                            // Anzeige der System-Hedges aus der DB
                             systemHedges.forEach { hedge ->
                                 SystemIntelligenceItem(hedge)
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
-
                             Divider(modifier = Modifier.padding(vertical = 12.dp), color = SentinelBlue.copy(alpha = 0.1f))
-
-                            // Makro-Daten
-                            DetailRow(label = "VIX (Volatility)", value = data.vix.toString(), color = SentinelOrange)
-                            DetailRow(label = "Skew Index", value = data.skew.toString(), color = SentinelBlue)
-                            DetailRow(label = "Global Liquidity (M2)", value = data.globalLiquidityM2, color = SentinelTurquoise)
+                            DetailRow("VIX (Volatility)", data.vix.toString(), SentinelOrange)
+                            DetailRow("Skew Index", data.skew.toString(), SentinelBlue)
+                            DetailRow("Fed Repo Flow", data.fedRepoFlow, SentinelTurquoise)
                         }
                     }
                 }
 
-                // ABSCHNITT 2: USER WATCHLIST
+                // User Watchlist
                 Text(
                     "MY WATCHLIST",
                     modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
@@ -178,12 +174,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                 }
 
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "SENTINEL LIVE MODE",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = SentinelTurquoise
-                    )
+                    Text("SENTINEL LIVE MODE", style = MaterialTheme.typography.bodySmall, color = SentinelTurquoise, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -192,16 +183,9 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
 @Composable
 fun SystemIntelligenceItem(item: WatchlistItem) {
-    val color = when {
-        item.score >= 7.5 -> SentinelBlue
-        item.score >= 4.0 -> SentinelOrange
-        else -> SentinelRed
-    }
+    val color = if (item.score >= 7.5) SentinelBlue else if (item.score >= 4.0) SentinelOrange else SentinelRed
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .padding(12.dp),
+        modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -209,16 +193,10 @@ fun SystemIntelligenceItem(item: WatchlistItem) {
             Text(item.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SentinelBlue)
             Text(item.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
-        Text(
-            text = String.format("%.1f", item.score),
-            fontWeight = FontWeight.Black,
-            color = color,
-            fontSize = 18.sp
-        )
+        Text(String.format("%.1f", item.score), fontWeight = FontWeight.Black, color = color, fontSize = 18.sp)
     }
 }
 
-// ... WatchlistItemComponent (identisch zu vorher, nur für User-Watchlist) ...
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WatchlistItemComponent(item: WatchlistItem, onDelete: () -> Unit, onEdit: () -> Unit) {
@@ -240,13 +218,13 @@ fun WatchlistItemComponent(item: WatchlistItem, onDelete: () -> Unit, onEdit: ()
                 Text(String.format("%.1f", item.score), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = scoreColor, fontWeight = FontWeight.Bold)
             }
         }
-        AnimatedVisibility(visible = showActions) {
+        AnimatedVisibility(visible = showActions, enter = expandHorizontally(), exit = shrinkHorizontally()) {
             Row(modifier = Modifier.padding(start = 8.dp)) {
-                IconButton(onClick = { onEdit(); showActions = false }, modifier = Modifier.background(SentinelBlue, RoundedCornerShape(8.dp)).size(40.dp)) {
+                IconButton(onClick = { onEdit(); showActions = false }, modifier = Modifier.background(SentinelBlue, RoundedCornerShape(12.dp)).size(40.dp)) {
                     Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                 }
                 Spacer(Modifier.width(8.dp))
-                IconButton(onClick = { onDelete(); showActions = false }, modifier = Modifier.background(SentinelRed, RoundedCornerShape(8.dp)).size(40.dp)) {
+                IconButton(onClick = { onDelete(); showActions = false }, modifier = Modifier.background(SentinelRed, RoundedCornerShape(12.dp)).size(40.dp)) {
                     Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White)
                 }
             }
@@ -254,27 +232,84 @@ fun WatchlistItemComponent(item: WatchlistItem, onDelete: () -> Unit, onEdit: ()
     }
 }
 
-// ... Dialoge und HeaderItems (AddStockDialog, EditStockDialog, StatusHeaderItem, DetailRow) bleiben gleich ...
 @Composable
 fun AddStockDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
     var symbol by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Neuer Watchlist-Ticker") },
-        text = { Column { OutlinedTextField(value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") })
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }) } },
-        confirmButton = { Button(onClick = { onConfirm(symbol, name) }) { Text("Hinzufügen") } })
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Neuer Watchlist-Ticker", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = name, onValueChange = { name = it }, label = { Text("Anzeigename") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(symbol, name) },
+                modifier = Modifier.height(52.dp).fillMaxWidth(0.4f), // Einheitliche Höhe für Kantigkeit
+                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Hinzufügen", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.height(52.dp)) {
+                Text("Abbrechen", color = Color.Gray)
+            }
+        },
+        containerColor = Color.White, shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
 fun EditStockDialog(item: WatchlistItem, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
     var symbol by remember { mutableStateOf(item.symbol) }
     var name by remember { mutableStateOf(item.name) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Ticker bearbeiten") },
-        text = { Column { OutlinedTextField(value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") })
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }) } },
-        confirmButton = { Button(onClick = { onConfirm(symbol, name) }) { Text("Speichern") } })
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ticker bearbeiten", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = name, onValueChange = { name = it }, label = { Text("Anzeigename") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(symbol, name) },
+                modifier = Modifier.height(52.dp).fillMaxWidth(0.4f),
+                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Speichern", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.height(52.dp)) {
+                Text("Abbrechen", color = Color.Gray)
+            }
+        },
+        containerColor = Color.White, shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
@@ -282,7 +317,7 @@ fun StatusHeaderItem(label: String, score: Double) {
     val color = if (score >= 7.5) SentinelBlue else if (score >= 4.0) SentinelOrange else SentinelRed
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(String.format("%.1f", score), fontSize = 26.sp, fontWeight = FontWeight.Black, color = color)
-        Text(label, fontSize = 11.sp, color = Color.Gray)
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
     }
 }
 
