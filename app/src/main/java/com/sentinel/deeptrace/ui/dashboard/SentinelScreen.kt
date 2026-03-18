@@ -12,26 +12,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType // NEU
+import androidx.compose.ui.platform.LocalHapticFeedback // NEU
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sentinel.deeptrace.ui.theme.*
+import com.sentinel.deeptrace.data.model.WatchlistItem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var itemToEdit by remember { mutableStateOf<WatchlistItem?>(null) }
 
     val data = viewModel.marketData
     val watchlist by viewModel.watchlist.collectAsState()
@@ -70,10 +70,19 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             AddStockDialog(
                 onDismiss = { showAddDialog = false },
                 onConfirm = { symbol, name ->
-                    if (symbol.isNotBlank()) {
-                        viewModel.addStock(symbol, name)
-                    }
+                    if (symbol.isNotBlank()) viewModel.addStock(symbol, name)
                     showAddDialog = false
+                }
+            )
+        }
+
+        itemToEdit?.let { item ->
+            EditStockDialog(
+                item = item,
+                onDismiss = { itemToEdit = null },
+                onConfirm = { newSymbol, newName ->
+                    viewModel.updateStock(item, newName, newSymbol)
+                    itemToEdit = null
                 }
             )
         }
@@ -89,7 +98,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
-                // Header Scores
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -111,21 +119,19 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     letterSpacing = 1.sp
                 )
 
-                // Watchlist mit Long-Press-Logik
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(watchlist) { item ->
-                        WatchlistItem(
+                        WatchlistItemComponent(
                             item = item,
                             onDelete = { viewModel.removeStock(item) },
-                            onEdit = { /* Platzhalter für Edit-Dialog */ }
+                            onEdit = { itemToEdit = item }
                         )
                     }
                 }
 
-                // Market Intelligence Card (Expandable)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -159,7 +165,6 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                // Status Anzeige unten
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = "Modus: ${if (data.isSimulation) "MARKUP B (Simulation)" else "LIVE MODE"}",
@@ -175,12 +180,13 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WatchlistItem(
-    item: com.sentinel.deeptrace.data.model.WatchlistItem,
+fun WatchlistItemComponent(
+    item: WatchlistItem,
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
     var showActions by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current // Haptic Feedback Provider holen
 
     val scoreColor = when {
         item.score >= 7.5 -> SentinelBlue
@@ -198,7 +204,11 @@ fun WatchlistItem(
                 .background(SentinelCardSurface, RoundedCornerShape(12.dp))
                 .combinedClickable(
                     onClick = { if (showActions) showActions = false },
-                    onLongClick = { showActions = true }
+                    onLongClick = {
+                        // VIBRATION AUSLÖSEN
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showActions = true
+                    }
                 )
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -226,7 +236,6 @@ fun WatchlistItem(
             }
         }
 
-        // Aktions-Menü (Erscheint nach Long-Press)
         AnimatedVisibility(
             visible = showActions,
             enter = expandHorizontally(),
@@ -260,6 +269,53 @@ fun WatchlistItem(
             }
         }
     }
+}
+
+// ... Restliche Dialoge (EditStockDialog, AddStockDialog) und UI-Komponenten (StatusHeaderItem, DetailRow) bleiben gleich wie zuvor ...
+
+@Composable
+fun EditStockDialog(
+    item: WatchlistItem,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var symbol by remember { mutableStateOf(item.symbol) }
+    var name by remember { mutableStateOf(item.name) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ticker bearbeiten", color = SentinelBlue, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = symbol,
+                    onValueChange = { symbol = it.uppercase() },
+                    label = { Text("Symbol") },
+                    singleLine = true,
+                    enabled = !item.isPermanent
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(symbol, name) },
+                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue)
+            ) {
+                Text("Aktualisieren")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Abbrechen", color = Color.Gray) }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable

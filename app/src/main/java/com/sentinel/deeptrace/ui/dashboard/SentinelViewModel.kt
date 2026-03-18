@@ -57,4 +57,12 @@ class SentinelViewModel(application: Application) : AndroidViewModel(application
             watchlistRepo.removeStock(stock)
         }
     }
+
+    fun updateStock(stock: WatchlistItem, newName: String, newSymbol: String) {
+        viewModelScope.launch {
+            // Wir erstellen eine Kopie des Items mit den neuen Werten
+            val updatedStock = stock.copy(name = newName, symbol = newSymbol)
+            watchlistRepo.addStock(updatedStock) // .addStock nutzt OnConflictStrategy.REPLACE
+        }
+    }
 }
