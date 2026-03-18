@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.sentinel.deeptrace.ui.theme.SentinelBlue
 import com.sentinel.deeptrace.ui.theme.SentinelOrange
 import com.sentinel.deeptrace.ui.theme.SentinelRed
+import com.sentinel.deeptrace.ui.theme.SentinelTurquoise
 
 object AppConfig {
     // --- Allgemeine App-Einstellungen ---
@@ -13,16 +14,18 @@ object AppConfig {
 
     // --- Schwellenwerte für Scores (10-Punkt System) ---
     object Thresholds {
-        const val SCORE_HIGH = 7.5    // Ab hier SentinelBlue (Stabil/Bullish)
-        const val SCORE_MEDIUM = 4.0  // Ab hier SentinelOrange (Neutral/Warnung)
-        // Alles darunter ist SentinelRed (Kritisch)
+        const val SCORE_SQUEEZE = 8.5   // Ab hier SentinelTurquoise (Maximum Strength)
+        const val SCORE_HIGH = 7.5      // Ab hier SentinelBlue (Stabil/Bullish)
+        const val SCORE_MEDIUM = 4.0    // Ab hier SentinelOrange (Neutral/Warnung)
+        // Alles darunter ist SentinelRed (Kritisch/Strukturbruch)
     }
 
-    // --- Markt-Hypothese & Risiko-Parameter ---
+    // --- Markt-Hypothese & Risiko-Parameter (Deine Working Hypothesis) ---
     object MarketRisks {
         const val USD_JPY_CRITICAL_LEVEL = 150.0 // Yen-Carry Trade Trigger
         const val SP500_BLOW_OFF_TOP_TARGET = 7500.0
         const val VIX_HEDGE_CALL_STRIKE = 30.0
+        const val VIX_SQUEEZE_ALERT = 25.0
     }
 
     // --- UI Defaults ---

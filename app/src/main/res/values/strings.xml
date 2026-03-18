@@ -1,46 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Sentinel Deep Trace</string>
-    <string name="live_mode">SENTINEL LIVE MODUS</string>
 
-    <string name="btn_save">Speichern</string>
-    <string name="btn_cancel">Abbrechen</string>
+    <string name="my_watchlist">MEINE WATCHLIST</string>
+    <string name="market_intelligence">MARKET INTELLIGENCE</string>
+    <string name="live_mode">LIVE MODE ACTIVE</string>
 
     <string name="header_system">SYSTEM</string>
     <string name="header_sp500">S&amp;P 500</string>
-    <string name="header_nasdaq">NAS 100</string>
+    <string name="header_nasdaq">NASDAQ</string>
 
-    <string name="market_intelligence">MARKT-INTELLIGENZ</string>
-    <string name="my_watchlist">MEINE WATCHLIST</string>
+    <string name="label_vix">VIX Score</string>
+    <string name="label_fed_repo">Fed Repo</string>
+    <string name="label_liquidity">Liquidity</string>
+    <string name="label_truflation">Truflation</string>
 
-    <string name="label_vix">VIX (Volatility)</string>
-    <string name="label_skew">Skew Index</string>
-    <string name="label_fed_repo">Fed Repo Flow</string>
-    <string name="label_liquidity">Global Liquidity M2</string>
-    <string name="label_truflation">Truflation (YoY)</string>
+    <string name="label_holdings_current">Bestand: %1$.2f Stk.</string>
+    <string name="label_invested">Investiert: %1$.2f %2$s</string>
+    <string name="label_score">Score: %1$.1f/10</string>
 
-    <string name="add_asset_title">Neues Asset hinzufügen</string>
-    <string name="edit_asset_title">Asset bearbeiten</string>
-    <string name="label_ticker_symbol">Ticker Symbol (z.B. BTC)</string>
-    <string name="label_display_name">Anzeigename</string>
+    <string name="sentiment_label">Sentiment:</string>
+    <string name="stability_label">Stabilität:</string>
+    <string name="hedge_indication">Hedge-Indikation:</string>
+    <string name="exit_indication">Exit-Signal:</string>
 
-    <string name="desc_add_asset">Asset hinzufügen</string>
-    <string name="desc_edit_asset">Asset bearbeiten</string>
-    <string name="desc_delete_asset">Asset löschen</string>
-    <string name="desc_expand_intelligence">Markt-Intelligenz erweitern</string>
+    <string name="add_asset_title">Asset hinzufügen</string>
+    <string name="desc_add_asset">Neues Asset zur Watchlist hinzufügen</string>
 
-    <string name="status_bullish">Stabil / Bullish</string>
-    <string name="status_neutral">Neutral / Warnung</string>
-    <string name="status_critical">Kritisch / Risiko</string>
+    <string name="label_transaction_title">Transaktion: %1$s</string>
+    <string name="label_buy">Kauf (+)</string>
+    <string name="label_sell">Verkauf (-)</string>
+    <string name="label_amount">Anzahl Anteile</string>
+    <string name="label_total_price">Gesamtpreis (%1$s)</string>
+    <string name="label_currency">Währung</string>
+    <string name="btn_book_transaction">Transaktion buchen</string>
 
-    <string name="error_ticker_not_found">Fehler: Ticker %1$s nicht im System gefunden.</string>
-    <string name="error_name_mismatch">Ungültige Daten: Name für %1$s darf nicht geändert werden.</string>
-    <string name="error_already_in_watchlist">%1$s ist bereits in deiner Watchlist.</string>
+    <string name="btn_save">Speichern</string>
+    <string name="btn_cancel">Abbrechen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_edit">Bearbeiten</string>
 
-    <string name="label_ticker_search">Ticker Symbol (suchen...)</string>
-    <string name="label_name_auto">Name (automatisch)</string>
-
-    <string name="action_edit">Asset bearbeiten</string>
-    <string name="action_delete">Asset entfernen</string>
+    <string name="error_ticker_not_found">Ticker %1$s wurde im Katalog nicht gefunden.</string>
+    <string name="error_name_mismatch">Name für %1$s stimmt nicht mit Katalog überein.</string>
+    <string name="error_already_in_watchlist">%1$s befindet sich bereits in deiner Watchlist.</string>
+    <string name="error_currency_mismatch">Fehler: Dieses Asset wird bereits in %1$s geführt!</string>
+    <string name="error_generic">Ein unerwarteter Fehler ist aufgetreten.</string>
 </resources>

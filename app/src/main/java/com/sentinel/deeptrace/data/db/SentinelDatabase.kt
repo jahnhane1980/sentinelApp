@@ -11,8 +11,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-@Database(entities = [WatchlistItem::class, AssetMaster::class, Market::class], version = 3, exportSchema = false)
+@Database(
+    entities = [
+        WatchlistItem::class,
+        AssetMaster::class,
+        Market::class,
+        Transaction::class // NEU hinzugefügt
+    ],
+    version = 6, // Transaction mit löschen, Automatisches Löschen (Foreign Key Cascade)
+    exportSchema = false
+)
 abstract class SentinelDatabase : RoomDatabase() {
+
     abstract fun watchlistDao(): WatchlistDao
 
     companion object {
@@ -26,7 +36,7 @@ abstract class SentinelDatabase : RoomDatabase() {
                     SentinelDatabase::class.java,
                     "sentinel_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // Löscht DB bei Versionssprung (wichtig für Dev-Phase)
                     .addCallback(SentinelDatabaseCallback(context))
                     .build()
                 INSTANCE = instance
@@ -34,7 +44,9 @@ abstract class SentinelDatabase : RoomDatabase() {
             }
         }
 
-        private class SentinelDatabaseCallback(private val context: Context) : RoomDatabase.Callback() {
+        private class SentinelDatabaseCallback(
+            private val context: Context
+        ) : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 INSTANCE?.let { database ->
@@ -45,33 +57,64 @@ abstract class SentinelDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Liest die initial_assets.json ein und befüllt Märkte sowie den Asset-Katalog.
+         */
         private suspend fun fillDatabaseFromJson(database: SentinelDatabase, context: Context) {
             val dao = database.watchlistDao()
             try {
-                val jsonString = context.assets.open("initial_assets.json").bufferedReader().use { it.readText() }
+                val jsonString = context.assets.open("initial_assets.json")
+                    .bufferedReader().use { it.readText() }
                 val root = JSONObject(jsonString)
 
+                // 1. Märkte importieren
                 val markets = root.getJSONArray("markets")
                 for (i in 0 until markets.length()) {
                     val m = markets.getJSONObject(i)
-                    dao.insertMarket(Market(m.getInt("id"), m.getString("name"), m.getString("region"), m.getString("suffix")))
+                    dao.insertMarket(
+                        Market(
+                            id = m.getInt("id"),
+                            name = m.getString("name"),
+                            region = m.getString("region"),
+                            suffix = m.getString("suffix")
+                        )
+                    )
                 }
 
+                // 2. Asset Master Katalog importieren
                 val assets = root.getJSONArray("assets")
                 for (i in 0 until assets.length()) {
                     val a = assets.getJSONObject(i)
                     val symbol = a.getString("symbol")
-                    dao.insertAssetMaster(AssetMaster(symbol, a.getString("name"), a.getInt("marketId")))
+
+                    dao.insertAssetMaster(
+                        AssetMaster(
+                            symbol = symbol,
+                            fullName = a.getString("name"),
+                            marketId = a.getInt("marketId")
+                        )
+                    )
+
+                    // Falls als permanent markiert (System-Hedges)
                     if (a.has("isPermanent") && a.getBoolean("isPermanent")) {
-                        dao.insertWatchlist(WatchlistItem(symbol, isPermanent = true))
+                        dao.insertWatchlist(WatchlistItem(symbol = symbol, isPermanent = true))
                     }
                 }
 
-                val watchlist = root.getJSONArray("initial_watchlist")
-                for (i in 0 until watchlist.length()) {
-                    dao.insertWatchlist(WatchlistItem(watchlist.getString(i)))
+                // 3. Initiale Nutzer-Watchlist setzen
+                if (root.has("initial_watchlist")) {
+                    val watchlist = root.getJSONArray("initial_watchlist")
+                    for (i in 0 until watchlist.length()) {
+                        val symbol = watchlist.getString(i)
+                        // Nur hinzufügen, wenn noch nicht durch "isPermanent" geschehen
+                        if (!dao.existsInWatchlist(symbol)) {
+                            dao.insertWatchlist(WatchlistItem(symbol = symbol))
+                        }
+                    }
                 }
-            } catch (e: Exception) { e.printStackTrace() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

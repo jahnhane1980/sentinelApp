@@ -39,28 +39,29 @@ fun StatusHeaderItem(label: String, score: Double) {
     }
 }
 
+
+// In MarketIntelligenceComponents.kt ergänzen/behalten:
 /**
- * Eine einfache Zeile für Label-Wert-Paare innerhalb der MarketIntelligenceCard.
- * Wird für VIX, Fed Repo Flow, etc. verwendet.
+ * ZENTRALE DEFINITION: Nur hier darf DetailRow stehen!
  */
 @Composable
 fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = SentinelDimens.SpacingSmall),
+            .padding(vertical = SentinelDimens.SpacingExtraSmall),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.DarkGray
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = SentinelBlue
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White,
+            fontWeight = FontWeight.Bold
         )
     }
 }

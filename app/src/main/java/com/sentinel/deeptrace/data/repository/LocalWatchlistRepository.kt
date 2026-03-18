@@ -23,4 +23,15 @@ class LocalWatchlistRepository(private val watchlistDao: WatchlistDao) {
 
     suspend fun removeStock(symbol: String) =
         watchlistDao.deleteWatchlist(WatchlistItem(symbol = symbol))
+
+    // Für den Währungs-Check im ViewModel
+    suspend fun getWatchlistItemInternal(symbol: String): WatchlistItem? {
+        return watchlistDao.getWatchlistItemBySymbol(symbol)
+    }
+
+    // Um die neue Transaktion zu speichern
+    suspend fun addTransaction(transaction: Transaction) {
+        watchlistDao.insertTransaction(transaction)
+    }
+
 }
