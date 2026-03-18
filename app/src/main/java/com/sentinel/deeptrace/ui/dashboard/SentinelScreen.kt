@@ -1,12 +1,7 @@
 package com.sentinel.deeptrace.ui.dashboard
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,28 +10,34 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sentinel.deeptrace.ui.dashboard.components.*
+import com.sentinel.deeptrace.ui.dashboard.dialogs.*
 import com.sentinel.deeptrace.ui.theme.*
 import com.sentinel.deeptrace.data.model.WatchlistItem
+import com.sentinel.deeptrace.ui.dashboard.dialogs.EditStockDialog
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SentinelScreen(viewModel: SentinelViewModel) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
-    var itemToEdit by remember { mutableStateOf<WatchlistItem?>(null) }
+
+    // Typ-Inferenz Fix
+    var itemToEdit by remember {
+        mutableStateOf<WatchlistItem?>(null)
+    }
 
     val data = viewModel.marketData
     val allWatchlistItems by viewModel.watchlist.collectAsState()
 
-    // Trennung von System-Analysen und User-Einträgen
     val systemHedges = allWatchlistItems.filter { it.isPermanent }
     val userWatchlist = allWatchlistItems.filter { !it.isPermanent }
 
@@ -73,24 +74,28 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
             AddStockDialog(
                 onDismiss = { showAddDialog = false },
                 onConfirm = { symbol, name ->
-                    if (symbol.isNotBlank()) viewModel.addStock(symbol, name)
+                    viewModel.addStock(symbol, name)
                     showAddDialog = false
                 }
             )
         }
 
-        itemToEdit?.let { item ->
+        // FIX FÜR DEN FEHLER IM BILD:
+        // Wir nutzen eine einfache if-Abfrage statt .let, das ist in Compose
+        // für Dialoge stabiler und vermeidet den "type parameter R" Fehler.
+        val currentItem = itemToEdit
+        if (currentItem != null) {
             EditStockDialog(
-                item = item,
+                item = currentItem,
                 onDismiss = { itemToEdit = null },
                 onConfirm = { newSymbol, newName ->
-                    viewModel.updateStock(item, newName, newSymbol)
+                    viewModel.updateStock(currentItem, newName, newSymbol)
                     itemToEdit = null
                 }
             )
         }
 
-        // --- UI Content ---
+        // --- Dashboard Content ---
         if (data == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = SentinelBlue)
@@ -102,7 +107,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
             ) {
-                // Cockpit Scores
+                // Header Score Anzeige
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -114,7 +119,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
 
                 Divider(color = SentinelDivider)
 
-                // Market Intelligence (System Hedges)
+                // Market Intelligence Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -151,7 +156,7 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
-                // User Watchlist
+                // My Watchlist
                 Text(
                     "MY WATCHLIST",
                     modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
@@ -173,11 +178,35 @@ fun SentinelScreen(viewModel: SentinelViewModel) {
                     }
                 }
 
+                // Footer
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
-                    Text("SENTINEL LIVE MODE", style = MaterialTheme.typography.bodySmall, color = SentinelTurquoise, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "SENTINEL LIVE MODE",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SentinelTurquoise,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+    }
+}
+
+// --- Hilfskomponenten ---
+@Composable
+fun StatusHeaderItem(label: String, score: Double) {
+    val color = if (score >= 7.5) SentinelBlue else if (score >= 4.0) SentinelOrange else SentinelRed
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(String.format("%.1f", score), fontSize = 26.sp, fontWeight = FontWeight.Black, color = color)
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String, color: Color) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = Color.Gray)
+        Text(value, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
@@ -194,137 +223,5 @@ fun SystemIntelligenceItem(item: WatchlistItem) {
             Text(item.symbol, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
         Text(String.format("%.1f", item.score), fontWeight = FontWeight.Black, color = color, fontSize = 18.sp)
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun WatchlistItemComponent(item: WatchlistItem, onDelete: () -> Unit, onEdit: () -> Unit) {
-    var showActions by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
-    val scoreColor = if (item.score >= 7.5) SentinelBlue else if (item.score >= 4.0) SentinelOrange else SentinelRed
-
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Row(
-            modifier = Modifier.weight(1f).background(SentinelCardSurface, RoundedCornerShape(12.dp))
-                .combinedClickable(
-                    onClick = { if (showActions) showActions = false },
-                    onLongClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); showActions = true }
-                ).padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(item.name, fontWeight = FontWeight.Bold, color = SentinelBlue)
-            Surface(color = scoreColor.copy(alpha = 0.08f), shape = RoundedCornerShape(8.dp)) {
-                Text(String.format("%.1f", item.score), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = scoreColor, fontWeight = FontWeight.Bold)
-            }
-        }
-        AnimatedVisibility(visible = showActions, enter = expandHorizontally(), exit = shrinkHorizontally()) {
-            Row(modifier = Modifier.padding(start = 8.dp)) {
-                IconButton(onClick = { onEdit(); showActions = false }, modifier = Modifier.background(SentinelBlue, RoundedCornerShape(12.dp)).size(40.dp)) {
-                    Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
-                }
-                Spacer(Modifier.width(8.dp))
-                IconButton(onClick = { onDelete(); showActions = false }, modifier = Modifier.background(SentinelRed, RoundedCornerShape(12.dp)).size(40.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AddStockDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
-    var symbol by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Neuer Watchlist-Ticker", color = SentinelBlue, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it }, label = { Text("Anzeigename") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(symbol, name) },
-                modifier = Modifier.height(52.dp).fillMaxWidth(0.4f), // Einheitliche Höhe für Kantigkeit
-                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Hinzufügen", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.height(52.dp)) {
-                Text("Abbrechen", color = Color.Gray)
-            }
-        },
-        containerColor = Color.White, shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun EditStockDialog(item: WatchlistItem, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
-    var symbol by remember { mutableStateOf(item.symbol) }
-    var name by remember { mutableStateOf(item.name) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Ticker bearbeiten", color = SentinelBlue, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = symbol, onValueChange = { symbol = it.uppercase() }, label = { Text("Symbol") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it }, label = { Text("Anzeigename") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SentinelBlue, focusedLabelColor = SentinelBlue, cursorColor = SentinelBlue),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(symbol, name) },
-                modifier = Modifier.height(52.dp).fillMaxWidth(0.4f),
-                colors = ButtonDefaults.buttonColors(containerColor = SentinelBlue),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Speichern", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.height(52.dp)) {
-                Text("Abbrechen", color = Color.Gray)
-            }
-        },
-        containerColor = Color.White, shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun StatusHeaderItem(label: String, score: Double) {
-    val color = if (score >= 7.5) SentinelBlue else if (score >= 4.0) SentinelOrange else SentinelRed
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(String.format("%.1f", score), fontSize = 26.sp, fontWeight = FontWeight.Black, color = color)
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-    }
-}
-
-@Composable
-fun DetailRow(label: String, value: String, color: Color) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = Color.Gray)
-        Text(value, fontWeight = FontWeight.Bold, color = color)
     }
 }
